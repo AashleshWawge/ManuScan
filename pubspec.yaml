@@ -1,0 +1,45 @@
+name: manuscan
+description: "A new Flutter project."
+
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.6.0
+
+dependencies:
+
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+  url_launcher: ^6.3.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.9.2
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/app_icon.png"
+
+flutter:
+    uses-material-design: true
+
+    assets:
+        - assets/images/
+#        - lib/.env
+
+    fonts:
+        - family: Midnights on the Shore
+          fonts:
+              - asset: assets/fonts/Midnights on the Shore.otf
+        - family: DM Sans
+          fonts:
+              - asset: assets/fonts/DMSans-VariableFont_opsz,wght
+
+
