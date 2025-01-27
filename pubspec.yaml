@@ -40,6 +40,6 @@ flutter:
               - asset: assets/fonts/Midnights on the Shore.otf
         - family: DM Sans
           fonts:
-              - asset: assets/fonts/DMSans-VariableFont_opsz,wght
+              - asset: assets/fonts/DMSans-VariableFont_opsz,wght.ttf
 
 
