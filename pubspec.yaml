@@ -12,9 +12,10 @@ dependencies:
 
   flutter:
     sdk: flutter
-
   cupertino_icons: ^1.0.8
   url_launcher: ^6.3.1
+  http: ^0.13.3
+  mysql1: ^0.19.2
 
 dev_dependencies:
   flutter_test:
