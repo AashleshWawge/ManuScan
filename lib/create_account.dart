@@ -1,5 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:mysql1/mysql1.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'login_page.dart';
 
@@ -22,20 +23,102 @@ class _CreateaccountState extends State<Createaccount> {
   String? _emailError;
   String? _passwordError;
   String? _confirmPasswordError;
+  String? _roleError;
+  String? _selectedRole;
+
+  Future<void> _testDbConnection() async {
+    // MySQL connection settings
+    final settings = ConnectionSettings(
+      host: '10.0.2.220',
+      user: 'root',
+      password: 'root',
+      port: 3306,
+      db: 'danadb',
+    );
+
+    try {
+      final conn = await MySqlConnection.connect(settings);
+      await conn.close();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Database connection successful')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Database connection failed: $e')),
+      );
+    }
+  }
+
+  Future<void> _createAccount() async {
+    final String displayName = _displayNameController.text;
+    final String password = _passwordController.text;
+    final String role = _selectedRole ?? 'user';
+
+    // MySQL connection settings
+    final settings = ConnectionSettings(
+      host: '10.0.2.220',
+      user: 'root',
+      password: 'root',
+      port: 3306,
+      db: 'danadb',
+    );
+
+    try {
+      final conn = await MySqlConnection.connect(settings);
+
+      // Upsert query
+      final result = await conn.query(
+        '''
+        INSERT INTO users (user_id, username, password, role, created_at)
+        VALUES (1, ?, ?, ?, NOW())
+        ON DUPLICATE KEY UPDATE
+          username = VALUES(username),
+          password = VALUES(password),
+          role = VALUES(role),
+          created_at = VALUES(created_at);
+        ''',
+        [displayName, password, role],
+      );
+
+      await conn.close();
+
+      if (result.affectedRows! > 0) {
+        // Handle successful account creation
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => login_account()),
+        );
+      } else {
+        // Handle account creation failure
+        setState(() {
+          _emailError = 'Failed to create account';
+        });
+      }
+    } catch (e) {
+      // Handle connection or query error
+      setState(() {
+        _emailError = 'Error: $e';
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text("Create Account"),
-        backgroundColor:
-            Color.fromARGB(255, 255, 255, 255), // Custom color for the app bar
+        backgroundColor: Color.fromARGB(255, 255, 255, 255),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.wifi),
+            onPressed: _testDbConnection,
+          ),
+        ],
       ),
       body: Container(
-        color: Colors.white, // Add white background
+        color: Colors.white,
         padding: const EdgeInsets.symmetric(horizontal: 20.0),
         child: SingleChildScrollView(
-          // Ensure scrolling if content overflows
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -92,6 +175,7 @@ class _CreateaccountState extends State<Createaccount> {
             'Password', true, Icons.lock, _passwordController, _passwordError),
         buildFormField('Confirm Password', true, Icons.lock,
             _confirmPasswordController, _confirmPasswordError),
+        buildRoleField(),
       ],
     );
   }
@@ -115,9 +199,7 @@ class _CreateaccountState extends State<Createaccount> {
           ),
           filled: true,
           fillColor: Color(0xFFD8DBE2),
-          prefixIcon: Icon(icon,
-              color: const Color.fromRGBO(
-                  88, 164, 176, 1)), // Change icon color here
+          prefixIcon: Icon(icon, color: const Color.fromRGBO(88, 164, 176, 1)),
           suffixIcon: isPassword
               ? IconButton(
                   icon: Icon(
@@ -158,6 +240,43 @@ class _CreateaccountState extends State<Createaccount> {
                   : null;
             }
           });
+        },
+      ),
+    );
+  }
+
+  Widget buildRoleField() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 27.0),
+      child: DropdownButtonFormField<String>(
+        value: _selectedRole,
+        decoration: InputDecoration(
+          labelText: 'Role',
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(30),
+            borderSide: BorderSide(color: Colors.white),
+          ),
+          filled: true,
+          fillColor: Color(0xFFD8DBE2),
+          prefixIcon: Icon(Icons.person_outline,
+              color: const Color.fromRGBO(88, 164, 176, 1)),
+          errorText: _roleError,
+        ),
+        items: <String>['Warehouse Team', 'admin']
+            .map<DropdownMenuItem<String>>((String value) {
+          return DropdownMenuItem<String>(
+            value: value,
+            child: Text(value),
+          );
+        }).toList(),
+        onChanged: (String? newValue) {
+          setState(() {
+            _selectedRole = newValue;
+            _roleError = null;
+          });
+        },
+        onSaved: (String? newValue) {
+          _selectedRole = newValue;
         },
       ),
     );
@@ -271,9 +390,7 @@ class _CreateaccountState extends State<Createaccount> {
           Padding(
             padding: const EdgeInsets.only(top: 60.0),
             child: GestureDetector(
-              onTap: () {
-                // Handle the account creation action
-              },
+              onTap: _createAccount,
               child: Container(
                 width: double.infinity,
                 height: 52,

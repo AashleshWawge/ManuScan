@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import 'forgot_password.dart';
 import 'create_account.dart';
 
-// import 'package:url_launcher/url_launcher.dart';
-
 class login_account extends StatefulWidget {
   const login_account({super.key});
 
@@ -24,19 +22,18 @@ class _login_account extends State<login_account> {
       appBar: AppBar(
         title: Text("Log In"),
         backgroundColor:
-            Color.fromARGB(255, 255, 255, 255), // Custom color for the app bar
+            Color.fromARGB(255, 255, 255, 255),
       ),
       body: Container(
-        color: Colors.white, // Add white background
+        color: Colors.white,
         padding: const EdgeInsets.symmetric(horizontal: 20.0),
         child: SingleChildScrollView(
-          // Ensure scrolling if content overflows
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               buildSubtitle(),
               SizedBox(
-                  height: 100), // Add space between subtitle and form fields
+                  height: 100),
               buildFormFields(),
               buildForgotPassword(),
               buildFooter(),
@@ -107,7 +104,7 @@ class _login_account extends State<login_account> {
           fillColor: Color(0xFFD8DBE2),
           prefixIcon: Icon(icon,
               color: const Color.fromRGBO(
-                  88, 164, 176, 1)), // Change icon color here
+                  88, 164, 176, 1)),
           suffixIcon: isPassword ? null : null,
           errorText: errorText,
         ),
@@ -199,7 +196,6 @@ class _login_account extends State<login_account> {
             padding: const EdgeInsets.only(top: 130.0),
             child: GestureDetector(
               onTap: () {
-                // Handle the account creation action
               },
               child: Container(
                 width: double.infinity,
