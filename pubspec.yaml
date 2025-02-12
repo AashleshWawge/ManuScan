@@ -25,22 +25,22 @@ dev_dependencies:
 
 flutter_icons:
   android: true
-  ios: true
-  image_path: "assets/icon/app_icon.png"
+  ios: false
+  image_path: "assets/icons/app_icon.png" # Ensure this path is correct
 
 flutter:
-    uses-material-design: true
+  uses-material-design: true
 
-    assets:
-        - assets/images/
+  assets:
+    - assets/images/
 #        - lib/.env
 
-    fonts:
-        - family: Midnights on the Shore
-          fonts:
-              - asset: assets/fonts/Midnights on the Shore.otf
-        - family: DM Sans
-          fonts:
-              - asset: assets/fonts/DMSans-VariableFont_opsz,wght.ttf
+  fonts:
+    - family: Midnights on the Shore
+      fonts:
+        - asset: assets/fonts/Midnights on the Shore.otf
+    - family: DM Sans
+      fonts:
+        - asset: assets/fonts/DMSans-VariableFont_opsz,wght.ttf
 
 

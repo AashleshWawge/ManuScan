@@ -20,6 +20,10 @@ class _ForgotPassword extends State<ForgotPassword> {
         title: Text("Forgot Password"),
         backgroundColor:
             Color.fromARGB(255, 255, 255, 255), // Custom color for the app bar
+        iconTheme: IconThemeData(
+          color: Color.fromRGBO(
+              88, 164, 176, 1), // Change back navigation button color here
+        ),
       ),
       body: Container(
         color: Colors.white, // Add white background
@@ -127,14 +131,10 @@ class _ForgotPassword extends State<ForgotPassword> {
                   borderRadius: BorderRadius.circular(100),
                   boxShadow: [
                     BoxShadow(
-                      color: Color(0x0F323247),
-                      blurRadius: 8,
-                      offset: Offset(0, 4),
-                    ),
-                    BoxShadow(
-                      color: Color(0x14323247),
-                      blurRadius: 4,
-                      offset: Offset(0, 4),
+                      color: Colors.black.withOpacity(0.2),
+                      spreadRadius: 2,
+                      blurRadius: 5,
+                      offset: Offset(0, 3),
                     ),
                   ],
                 ),
@@ -145,7 +145,7 @@ class _ForgotPassword extends State<ForgotPassword> {
                       color: Colors.white,
                       fontSize: 18,
                       fontFamily: 'DM Sans',
-                      fontWeight: FontWeight.w400,
+                      fontWeight: FontWeight.bold,
                       height: 1.22,
                     ),
                   ),

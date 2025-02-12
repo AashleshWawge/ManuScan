@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'create_account.dart';
 import 'login_page.dart';
 import 'package:mysql1/mysql1.dart';
+import 'home_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -129,7 +130,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     },
                     style: ElevatedButton.styleFrom(
                         minimumSize: const Size(double.infinity, 50),
-                        backgroundColor: Color.fromRGBO(55, 63, 81, 1)),
+                        backgroundColor: Color.fromRGBO(55, 63, 81, 1),
+                        elevation: 5,
+                        shadowColor: Colors.black.withOpacity(0.2)),
                     child: const Text(
                       'CREATE ACCOUNT',
                       style: TextStyle(
@@ -144,16 +147,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => login_account()),
+                            builder: (context) => HomeScreen()),
                       );
                     },
                     style: TextButton.styleFrom(
                       minimumSize: const Size(double.infinity, 50),
                       backgroundColor: Color.fromRGBO(216, 219, 226, 1),
+                      elevation: 5,
+                      shadowColor: Colors.black.withOpacity(0.2),
                     ),
                     child: const Text(
                       'LOG IN',
-                      style: TextStyle(color: Colors.black),
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ],

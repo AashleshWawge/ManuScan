@@ -108,6 +108,10 @@ class _CreateaccountState extends State<Createaccount> {
       appBar: AppBar(
         title: Text("Create Account"),
         backgroundColor: Color.fromARGB(255, 255, 255, 255),
+        iconTheme: IconThemeData(
+          color: Color.fromRGBO(
+              88, 164, 176, 1), // Change back navigation button color here
+        ),
         actions: [
           IconButton(
             icon: Icon(Icons.wifi),
@@ -258,11 +262,10 @@ class _CreateaccountState extends State<Createaccount> {
           ),
           filled: true,
           fillColor: Color(0xFFD8DBE2),
-          prefixIcon: Icon(Icons.person_outline,
-              color: const Color.fromRGBO(88, 164, 176, 1)),
+          prefixIcon: _getRoleIconWidget(_selectedRole),
           errorText: _roleError,
         ),
-        items: <String>['Warehouse Team', 'admin']
+        items: <String>['Admin/Manager Team', 'Security Team', 'Warehouse Team']
             .map<DropdownMenuItem<String>>((String value) {
           return DropdownMenuItem<String>(
             value: value,
@@ -280,6 +283,25 @@ class _CreateaccountState extends State<Createaccount> {
         },
       ),
     );
+  }
+
+  Widget _getRoleIconWidget(String? role) {
+    switch (role) {
+      case 'Admin/Manager Team':
+        return Icon(Icons.admin_panel_settings,
+            color: const Color.fromRGBO(88, 164, 176, 1));
+      case 'Security Team':
+        return Icon(Icons.security,
+            color: const Color.fromRGBO(88, 164, 176, 1));
+      case 'Warehouse Team':
+        return Image.asset('assets/images/warehouse.png',
+            color: const Color.fromRGBO(88, 164, 176, 1),
+            width: 24,
+            height: 24);
+      default:
+        return Icon(Icons.person_outline,
+            color: const Color.fromRGBO(88, 164, 176, 1));
+    }
   }
 
   Widget buildFooter() {
@@ -325,7 +347,7 @@ class _CreateaccountState extends State<Createaccount> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.only(top: 60.0),
+            padding: const EdgeInsets.only(top: 10.0),
             child: SizedBox(
               width: double.infinity,
               height: 66,
@@ -399,14 +421,10 @@ class _CreateaccountState extends State<Createaccount> {
                   borderRadius: BorderRadius.circular(100),
                   boxShadow: [
                     BoxShadow(
-                      color: Color(0x0F323247),
-                      blurRadius: 8,
-                      offset: Offset(0, 4),
-                    ),
-                    BoxShadow(
-                      color: Color(0x14323247),
-                      blurRadius: 4,
-                      offset: Offset(0, 4),
+                      color: Colors.black.withOpacity(0.2),
+                      spreadRadius: 2,
+                      blurRadius: 5,
+                      offset: Offset(0, 3),
                     ),
                   ],
                 ),
@@ -417,7 +435,7 @@ class _CreateaccountState extends State<Createaccount> {
                       color: Colors.white,
                       fontSize: 18,
                       fontFamily: 'DM Sans',
-                      fontWeight: FontWeight.w400,
+                      fontWeight: FontWeight.bold,
                       height: 1.22,
                     ),
                   ),

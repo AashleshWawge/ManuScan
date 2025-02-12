@@ -21,8 +21,11 @@ class _login_account extends State<login_account> {
     return Scaffold(
       appBar: AppBar(
         title: Text("Log In"),
-        backgroundColor:
-            Color.fromARGB(255, 255, 255, 255),
+        backgroundColor: Color.fromARGB(255, 255, 255, 255),
+        iconTheme: IconThemeData(
+          color: Color.fromRGBO(
+              88, 164, 176, 1), // Change back navigation button color here
+        ),
       ),
       body: Container(
         color: Colors.white,
@@ -32,8 +35,7 @@ class _login_account extends State<login_account> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               buildSubtitle(),
-              SizedBox(
-                  height: 100),
+              SizedBox(height: 100),
               buildFormFields(),
               buildForgotPassword(),
               buildFooter(),
@@ -102,9 +104,7 @@ class _login_account extends State<login_account> {
           ),
           filled: true,
           fillColor: Color(0xFFD8DBE2),
-          prefixIcon: Icon(icon,
-              color: const Color.fromRGBO(
-                  88, 164, 176, 1)),
+          prefixIcon: Icon(icon, color: const Color.fromRGBO(88, 164, 176, 1)),
           suffixIcon: isPassword ? null : null,
           errorText: errorText,
         ),
@@ -134,7 +134,7 @@ class _login_account extends State<login_account> {
               color: Color(0xFF58A4B0),
               fontSize: 16,
               fontFamily: 'DM Sans',
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.bold,
               decoration: TextDecoration.underline,
               decorationColor: Color(0xFF58A4B0),
             ),
@@ -195,8 +195,7 @@ class _login_account extends State<login_account> {
           Padding(
             padding: const EdgeInsets.only(top: 130.0),
             child: GestureDetector(
-              onTap: () {
-              },
+              onTap: () {},
               child: Container(
                 width: double.infinity,
                 height: 52,
@@ -223,7 +222,7 @@ class _login_account extends State<login_account> {
                       color: Colors.white,
                       fontSize: 18,
                       fontFamily: 'DM Sans',
-                      fontWeight: FontWeight.w400,
+                      fontWeight: FontWeight.bold, // Bold the text
                       height: 1.22,
                     ),
                   ),
