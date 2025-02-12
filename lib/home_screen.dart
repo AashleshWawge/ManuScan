@@ -1,0 +1,143 @@
+import 'package:flutter/material.dart';
+
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      bottomNavigationBar: _buildBottomNavigationBar(),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHeader(),
+              const SizedBox(height: 20),
+              const Text(
+                "What would you like to do ?",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+              _buildActionCard(
+                imagePath: 'assets/images/pd.png', // Add your image path here
+                title: "Pallet Dispatch",
+                description:
+                    "Manage the outbound movement of pallets by tracking dispatch details and ensuring accurate inventory updates.",
+              ),
+              _buildActionCard(
+                imagePath: 'assets/images/pr.png', // Add your image path here
+                title: "Pallet Return",
+                description:
+                    "Handle the return of pallets efficiently by recording inbound shipments, verifying conditions, and updating stock levels.",
+              ),
+              _buildActionCard(
+                imagePath: 'assets/images/dd.png', // Add your image path here
+                title: "Defect Detection",
+                description:
+                    "Identify and track defective pallets through inspection, categorize issues, and take necessary actions for repairs or replacements.",
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    final String userName = "John"; // Replace with dynamic user name
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Stack(
+        children: [
+          Image.asset('assets/images/textbg.png'), // Add your image here
+          Positioned(
+            left: 16,
+            top: 16,
+            right: 16,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Welcome, $userName",
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    fontStyle: FontStyle.italic,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  "Manage your inventory seamlessly. Navigate through dispatch, returns, and defect detection with ease",
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.white.withOpacity(0.9),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionCard({
+    required String imagePath,
+    required String title,
+    required String description,
+  }) {
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 10),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Image.asset(imagePath, width: 40, height: 40),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    description,
+                    style: TextStyle(color: Colors.grey.shade700),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBottomNavigationBar() {
+    return BottomNavigationBar(
+      currentIndex: 0,
+      type: BottomNavigationBarType.fixed,
+      selectedItemColor: Colors.teal.shade700,
+      unselectedItemColor: Colors.grey.shade600,
+      items: const [
+        BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
+        BottomNavigationBarItem(
+            icon: Icon(Icons.notifications), label: "Notifications"),
+        BottomNavigationBarItem(icon: Icon(Icons.settings), label: "Settings"),
+        BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
+      ],
+    );
+  }
+}
