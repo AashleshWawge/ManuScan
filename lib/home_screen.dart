@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:manuscan/notification.dart';
 import 'package:manuscan/settings.dart';
-import 'package:manuscan/defect_detection.dart';
-import 'package:manuscan/pallet_return.dart';
-import 'pallet_dispatch.dart';
+import 'defectdetection/defect_detection.dart';
+import 'palletreturn/pallet_return.dart';
+import 'palletdispatch/pallet_dispatch.dart';
+import 'profile.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -19,8 +20,7 @@ class _HomeScreenState extends State<HomeScreen> {
     const HomeScreenContent(),
     const NotificationsScreen(),
     const SettingsScreen(),
-    const Center(
-        child: Text('Profile Screen')), // Placeholder for Profile screen
+    ProfileScreen(), // Placeholder for Profile screen
   ];
 
   @override
@@ -83,7 +83,7 @@ class HomeScreenContent extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (context) => const PalletDispatchScreen()),
+                    builder: (context) => PalletDispatchScreen1()),
               );
             },
           ),
@@ -97,7 +97,7 @@ class HomeScreenContent extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (context) => const PalletReturnScreen()),
+                    builder: (context) => const PalletReturnScreen1()),
               );
             },
           ),
