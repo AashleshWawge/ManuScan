@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'create_account.dart';
 import 'login_page.dart';
-import 'package:mysql1/mysql1.dart';
-import 'home_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -12,31 +10,6 @@ class OnboardingScreen extends StatefulWidget {
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
-  @override
-  void initState() {
-    super.initState();
-    _testDbConnection();
-  }
-
-  Future<void> _testDbConnection() async {
-    // MySQL connection settings
-    final settings = ConnectionSettings(
-      host: '10.0.2.220',
-      user: 'root',
-      password: 'root',
-      port: 3306,
-      db: 'danadb',
-    );
-
-    try {
-      final conn = await MySqlConnection.connect(settings);
-      await conn.close();
-      print('Database connection successful');
-    } catch (e) {
-      print('Database connection failed: $e');
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -147,7 +120,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => HomeScreen()),
+                            builder: (context) => login_account()),
                       );
                     },
                     style: TextButton.styleFrom(

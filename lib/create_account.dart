@@ -1,6 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:mysql1/mysql1.dart';
+import 'package:manuscan/home_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'login_page.dart';
 
@@ -26,80 +26,34 @@ class _CreateaccountState extends State<Createaccount> {
   String? _roleError;
   String? _selectedRole;
 
-  Future<void> _testDbConnection() async {
-    // MySQL connection settings
-    final settings = ConnectionSettings(
-      host: '10.0.2.220',
-      user: 'root',
-      password: 'root',
-      port: 3306,
-      db: 'danadb',
-    );
-
-    try {
-      final conn = await MySqlConnection.connect(settings);
-      await conn.close();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Database connection successful')),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Database connection failed: $e')),
-      );
-    }
-  }
-
   Future<void> _createAccount() async {
     final String displayName = _displayNameController.text;
     final String password = _passwordController.text;
     final String role = _selectedRole ?? 'user';
 
-    // MySQL connection settings
-    final settings = ConnectionSettings(
-      host: '10.0.2.220',
-      user: 'root',
-      password: 'root',
-      port: 3306,
-      db: 'danadb',
-    );
+    // Call your API endpoint here to create the account
+    // Example:
+    // final response = await http.post(
+    //   Uri.parse('https://your-api-endpoint.com/create-account'),
+    //   body: {
+    //     'displayName': displayName,
+    //     'password': password,
+    //     'role': role,
+    //   },
+    // );
 
-    try {
-      final conn = await MySqlConnection.connect(settings);
-
-      // Upsert query
-      final result = await conn.query(
-        '''
-        INSERT INTO users (user_id, username, password, role, created_at)
-        VALUES (1, ?, ?, ?, NOW())
-        ON DUPLICATE KEY UPDATE
-          username = VALUES(username),
-          password = VALUES(password),
-          role = VALUES(role),
-          created_at = VALUES(created_at);
-        ''',
-        [displayName, password, role],
-      );
-
-      await conn.close();
-
-      if (result.affectedRows! > 0) {
-        // Handle successful account creation
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => login_account()),
-        );
-      } else {
-        // Handle account creation failure
-        setState(() {
-          _emailError = 'Failed to create account';
-        });
-      }
-    } catch (e) {
-      // Handle connection or query error
-      setState(() {
-        _emailError = 'Error: $e';
-      });
-    }
+    // Handle the response from the API
+    // Example:
+    // if (response.statusCode == 200) {
+    //   Navigator.push(
+    //     context,
+    //     MaterialPageRoute(builder: (context) => login_account()),
+    //   );
+    // } else {
+    //   setState(() {
+    //     _emailError = 'Failed to create account';
+    //   });
+    // }
   }
 
   @override
@@ -112,12 +66,6 @@ class _CreateaccountState extends State<Createaccount> {
           color: Color.fromRGBO(
               88, 164, 176, 1), // Change back navigation button color here
         ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.wifi),
-            onPressed: _testDbConnection,
-          ),
-        ],
       ),
       body: Container(
         color: Colors.white,
@@ -375,13 +323,8 @@ class _CreateaccountState extends State<Createaccount> {
                         height: 1.22,
                       ),
                       recognizer: TapGestureRecognizer()
-                        ..onTap = () async {
-                          const url = 'https://www.google.com/';
-                          if (await canLaunchUrl(Uri.parse(url))) {
-                            await launchUrl(Uri.parse(url));
-                          } else {
-                            throw 'Could not load $url';
-                          }
+                        ..onTap = () {
+                          launch('https://example.com/terms');
                         },
                     ),
                     TextSpan(
@@ -412,7 +355,12 @@ class _CreateaccountState extends State<Createaccount> {
           Padding(
             padding: const EdgeInsets.only(top: 60.0),
             child: GestureDetector(
-              onTap: _createAccount,
+                onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => HomeScreen()),
+                );
+                },
               child: Container(
                 width: double.infinity,
                 height: 52,
