@@ -194,7 +194,7 @@ class _PalletReturnScreenState extends State<PalletReturnScreen> {
   @override
   void initState() {
     super.initState();
-    returnedStatus = List<bool>.filled(widget.scannedPallets.length, false);
+    returnedStatus = List<bool>.from(widget.scannedPallets.map((_) => false));
   }
 
   @override
@@ -220,7 +220,7 @@ class _PalletReturnScreenState extends State<PalletReturnScreen> {
               !widget.scannedPallets.contains(scannedCode)) {
             setState(() {
               widget.scannedPallets.add(scannedCode);
-              returnedStatus.add(widget.scannedPallets.length % 2 == 0);
+              returnedStatus.add(false);
             });
           }
         },
@@ -441,56 +441,73 @@ void showPalletsNotReturnedPopup(BuildContext context, int notReturnedCount) {
   );
 }
 
-void showDeletePalletPopup(BuildContext context, VoidCallback onDelete) {
+void showDeletePalletPopup(BuildContext context, VoidCallback onConfirm) {
   showDialog(
     context: context,
     builder: (BuildContext context) {
       return AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        contentPadding:
-            const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(15),
+        ),
+        contentPadding: const EdgeInsets.all(20),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text(
-              "DELETE PALLET?",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              "DELETE PALLET ?",
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.black,
+                letterSpacing: 1.2,
+              ),
             ),
             const SizedBox(height: 10),
             const Text(
-              "Are you sure you want to delete this pallet?",
+              "Are you sure you want to delete this pallet ?",
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16),
+              style: TextStyle(
+                fontSize: 14,
+                fontFamily: "DMSans",
+                color: Colors.black54,
+              ),
             ),
             const SizedBox(height: 20),
             Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      onConfirm(); // Calls the function to delete
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          const Color(0xFF3D4252), // Dark button color
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: const Text("YES"),
                   ),
-                  onPressed: () {
-                    onDelete(); // Execute deletion
-                    Navigator.pop(context); // Close popup
-                  },
-                  child:
-                      const Text("YES", style: TextStyle(color: Colors.white)),
                 ),
-                const SizedBox(width: 15),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.grey,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 12),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.grey.shade300,
+                      foregroundColor: Colors.black54,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: const Text("NO"),
                   ),
-                  onPressed: () {
-                    Navigator.pop(context); // Close popup
-                  },
-                  child:
-                      const Text("NO", style: TextStyle(color: Colors.black)),
                 ),
               ],
             ),

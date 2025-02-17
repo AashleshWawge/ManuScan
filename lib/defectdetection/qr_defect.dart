@@ -171,8 +171,8 @@ class _CustomScannerScreendefectState extends State<CustomScannerScreendefect> {
                     style:
                         ElevatedButton.styleFrom(backgroundColor: Colors.red),
                     onPressed: () {
+                      _updatePalletStatus(code, 'Scrap');
                       Navigator.of(context).pop();
-                      Navigator.pop(context, {'code': code, 'status': 'Scrap'});
                     },
                     child: const Text('Scrap'),
                   ),
@@ -180,8 +180,8 @@ class _CustomScannerScreendefectState extends State<CustomScannerScreendefect> {
                     style:
                         ElevatedButton.styleFrom(backgroundColor: Colors.blue),
                     onPressed: () {
+                      _updatePalletStatus(code, 'OK');
                       Navigator.of(context).pop();
-                      Navigator.pop(context, {'code': code, 'status': 'OK'});
                     },
                     child: const Text('OK'),
                   ),
@@ -189,9 +189,8 @@ class _CustomScannerScreendefectState extends State<CustomScannerScreendefect> {
                     style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.yellow),
                     onPressed: () {
+                      _updatePalletStatus(code, 'Repair');
                       Navigator.of(context).pop();
-                      Navigator.pop(
-                          context, {'code': code, 'status': 'Repair'});
                     },
                     child: const Text('Repair'),
                   ),
@@ -210,6 +209,17 @@ class _CustomScannerScreendefectState extends State<CustomScannerScreendefect> {
         );
       },
     );
+  }
+
+  void _updatePalletStatus(String code, String status) {
+    setState(() {
+      for (var pallet in widget.scannedPallets) {
+        if (pallet['code'] == code) {
+          pallet['status'] = status;
+          break;
+        }
+      }
+    });
   }
 }
 
@@ -409,7 +419,13 @@ Widget PalletReturn3(
             ),
             ElevatedButton(
               onPressed: () {
-                showPalletsNotReturnedPopup(context, 0);
+                int repairedCount = pallets
+                    .where((pallet) => pallet['status'] == 'Repair')
+                    .length;
+                int scrapCount = pallets
+                    .where((pallet) => pallet['status'] == 'Scrap')
+                    .length;
+                showPalletsNotReturnedPopup(context, repairedCount, scrapCount);
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color.fromARGB(255, 216, 219, 226),
@@ -430,7 +446,8 @@ Widget PalletReturn3(
   );
 }
 
-void showPalletsNotReturnedPopup(BuildContext context, int notReturnedCount) {
+void showPalletsNotReturnedPopup(
+    BuildContext context, int repairedCount, int scrapCount) {
   // Don't show if all pallets are returned
 
   showDialog(
@@ -444,13 +461,13 @@ void showPalletsNotReturnedPopup(BuildContext context, int notReturnedCount) {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text(
-              "PALLETS NOT RETURNED",
+              "PALLETS DEFECT DETECTED",
               style: TextStyle(
                   fontSize: 18, fontWeight: FontWeight.bold, color: Colors.red),
             ),
             const SizedBox(height: 10),
             Text(
-              "$notReturnedCount pallet(s) from the selected Challan have not been returned by the customer.",
+              "$repairedCount pallet(s) to be repaired and $scrapCount pallet(s) to be scrapped from the selected Challan.",
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 16),
             ),
