@@ -402,9 +402,8 @@ class PalletReturn3 extends StatefulWidget {
   final String challanId;
   final List<String> scannedPallets;
 
-  PalletReturn3(
-      {Key? key, required this.challanId, required this.scannedPallets})
-      : super(key: key);
+  const PalletReturn3(
+      {super.key, required this.challanId, required this.scannedPallets});
 
   @override
   _PalletReturn3 createState() => _PalletReturn3();

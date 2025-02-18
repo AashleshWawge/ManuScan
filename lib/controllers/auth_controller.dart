@@ -27,18 +27,20 @@ class AuthController extends GetxController {
       _isLoading.value = true;
       _errorMessage.value = '';
 
-      final response = await http.post(
-        Uri.parse('http://10.0.2.2:8800/Registeration'),
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
-        body: jsonEncode(<String, String>{
-          'displayName': displayName,
-          'email': email,
-          'password': password,
-          'role': role,
-        }),
-      ).timeout(Duration(seconds: 10));
+      final response = await http
+          .post(
+            Uri.parse('http://localhost:8800/Registeration'),
+            headers: <String, String>{
+              'Content-Type': 'application/json; charset=UTF-8',
+            },
+            body: jsonEncode(<String, String>{
+              'displayName': displayName,
+              'email': email,
+              'password': password,
+              'role': role,
+            }),
+          )
+          .timeout(Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         _currentUser.value = {
@@ -63,16 +65,24 @@ class AuthController extends GetxController {
       _isLoading.value = true;
       _errorMessage.value = '';
 
-      final response = await http.post(
-        Uri.parse('http://10.0.2.2:8800/Login'),
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
-        body: jsonEncode(<String, String>{
-          'user_name': email,
-          'password': password,
-        }),
-      ).timeout(Duration(seconds: 10));
+      print('Sending POST request to http://localhost:8800/Login');
+      print('Request body: ${jsonEncode(<String, String>{
+            'user_name': email,
+            'password': password,
+          })}');
+
+      final response = await http
+          .post(
+            Uri.parse('http://localhost:8800/Login'),
+            headers: <String, String>{
+              'Content-Type': 'application/json; charset=UTF-8',
+            },
+            body: jsonEncode(<String, String>{
+              'user_name': email,
+              'password': password,
+            }),
+          )
+          .timeout(Duration(seconds: 10));
 
       print('Response status: ${response.statusCode}');
       print('Response body: ${response.body}');
