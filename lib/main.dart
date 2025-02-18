@@ -1,21 +1,25 @@
 import 'package:flutter/material.dart';
-import 'splashscreen.dart';
+import 'package:get/get.dart';
+import 'onboarding_screen.dart';
+import 'controllers/auth_controller.dart';
 
 void main() {
-  runApp(const MyApp());
+  initializeControllers();
+  runApp(MyApp());
+}
+
+void initializeControllers() {
+  Get.put(AuthController()); // Initialize AuthController globally
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return GetMaterialApp(
+      // Changed from MaterialApp to GetMaterialApp
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: SplashScreen(),
+      title: 'ManuScan',
+      home: OnboardingScreen(),
     );
   }
 }

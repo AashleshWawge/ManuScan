@@ -1,7 +1,9 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'forgot_password.dart';
 import 'create_account.dart';
+import 'controllers/auth_controller.dart';
 
 class login_account extends StatefulWidget {
   const login_account({super.key});
@@ -11,71 +13,61 @@ class login_account extends StatefulWidget {
 }
 
 class _login_account extends State<login_account> {
+  final AuthController authController = Get.find<AuthController>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   String? _emailError;
   String? _passwordError;
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("Log In"),
-        backgroundColor: Color.fromARGB(255, 255, 255, 255),
-        iconTheme: IconThemeData(
-          color: Color.fromRGBO(
-              88, 164, 176, 1), // Change back navigation button color here
-        ),
-      ),
-      body: Container(
-        color: Colors.white,
-        padding: const EdgeInsets.symmetric(horizontal: 20.0),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              buildSubtitle(),
-              SizedBox(height: 100),
-              buildFormFields(),
-              buildForgotPassword(),
-              buildFooter(),
-            ],
-          ),
-        ),
-      ),
+  Future<void> _login() async {
+    if (_emailError != null || _passwordError != null) {
+      return;
+    }
+
+    await authController.login(
+      _emailController.text,
+      _passwordController.text,
     );
   }
 
-  Widget buildSubtitle() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 30.0),
-      child: Text.rich(
-        TextSpan(
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() => Stack(
           children: [
-            TextSpan(
-              text: 'Welcome back !\n',
-              style: TextStyle(
-                color: Color(0xFF1B1B1E),
-                fontSize: 18,
-                fontFamily: 'DM Sans',
-                fontWeight: FontWeight.w700,
-                height: 1.22,
+            Scaffold(
+              appBar: AppBar(
+                title: Text("Log In"),
+                backgroundColor: Colors.white,
+                iconTheme: IconThemeData(
+                  color: Color.fromRGBO(88, 164, 176, 1),
+                ),
+              ),
+              body: Container(
+                color: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      buildSubtitle(),
+                      SizedBox(height: 100),
+                      buildFormFields(),
+                      buildForgotPassword(context),
+                      buildFooter(),
+                    ],
+                  ),
+                ),
               ),
             ),
-            TextSpan(
-              text: 'Please login with your credentials',
-              style: TextStyle(
-                color: Color(0xFF1B1B1E),
-                fontSize: 18,
-                fontFamily: 'DM Sans',
-                fontWeight: FontWeight.w300,
-                height: 1.22,
+            if (authController.isLoading)
+              Container(
+                color: Colors.black54,
+                child: Center(
+                  child: CircularProgressIndicator(),
+                ),
               ),
-            ),
           ],
-        ),
-      ),
-    );
+        ));
   }
 
   Widget buildFormFields() {
@@ -122,7 +114,7 @@ class _login_account extends State<login_account> {
     );
   }
 
-  Widget buildForgotPassword() {
+  Widget buildForgotPassword(BuildContext context) {
     return Align(
       alignment: Alignment.centerRight,
       child: Padding(
@@ -161,7 +153,7 @@ class _login_account extends State<login_account> {
             TextSpan(
               children: [
                 TextSpan(
-                  text: 'Don’t have an account yet ?\n',
+                  text: 'Dont have an account yet ?\n',
                   style: TextStyle(
                     color: Colors.black,
                     fontSize: 18,
@@ -181,13 +173,8 @@ class _login_account extends State<login_account> {
                     height: 1.22,
                   ),
                   recognizer: TapGestureRecognizer()
-                    ..onTap = () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => Createaccount()),
-                      );
-                    },
+                    ..onTap = () => Get.to(() =>
+                        Createaccount()), // Updated to use GetX navigation
                 ),
               ],
             ),
@@ -195,7 +182,7 @@ class _login_account extends State<login_account> {
           Padding(
             padding: const EdgeInsets.only(top: 130.0),
             child: GestureDetector(
-              onTap: () {},
+              onTap: _login, // Updated to use _login method
               child: Container(
                 width: double.infinity,
                 height: 52,
@@ -222,7 +209,7 @@ class _login_account extends State<login_account> {
                       color: Colors.white,
                       fontSize: 18,
                       fontFamily: 'DM Sans',
-                      fontWeight: FontWeight.bold, // Bold the text
+                      fontWeight: FontWeight.bold,
                       height: 1.22,
                     ),
                   ),
@@ -234,4 +221,36 @@ class _login_account extends State<login_account> {
       ),
     );
   }
+}
+
+Widget buildSubtitle() {
+  return Padding(
+    padding: const EdgeInsets.only(top: 30.0),
+    child: Text.rich(
+      TextSpan(
+        children: [
+          TextSpan(
+            text: 'Welcome back !\n',
+            style: TextStyle(
+              color: Color(0xFF1B1B1E),
+              fontSize: 18,
+              fontFamily: 'DM Sans',
+              fontWeight: FontWeight.w700,
+              height: 1.22,
+            ),
+          ),
+          TextSpan(
+            text: 'Please login with your credentials',
+            style: TextStyle(
+              color: Color(0xFF1B1B1E),
+              fontSize: 18,
+              fontFamily: 'DM Sans',
+              fontWeight: FontWeight.w300,
+              height: 1.22,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }

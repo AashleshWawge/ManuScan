@@ -1,8 +1,9 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:manuscan/home_screen.dart';
+import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'login_page.dart';
+import 'controllers/auth_controller.dart';
 
 class Createaccount extends StatefulWidget {
   const Createaccount({super.key});
@@ -12,6 +13,7 @@ class Createaccount extends StatefulWidget {
 }
 
 class _CreateaccountState extends State<Createaccount> {
+  final AuthController authController = Get.find<AuthController>();
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
   final TextEditingController _displayNameController = TextEditingController();
@@ -27,59 +29,58 @@ class _CreateaccountState extends State<Createaccount> {
   String? _selectedRole;
 
   Future<void> _createAccount() async {
-    final String displayName = _displayNameController.text;
-    final String password = _passwordController.text;
-    final String role = _selectedRole ?? 'user';
+    if (_displayNameError != null ||
+        _emailError != null ||
+        _passwordError != null ||
+        _confirmPasswordError != null ||
+        _roleError != null) {
+      return;
+    }
 
-    // Call your API endpoint here to create the account
-    // Example:
-    // final response = await http.post(
-    //   Uri.parse('https://your-api-endpoint.com/create-account'),
-    //   body: {
-    //     'displayName': displayName,
-    //     'password': password,
-    //     'role': role,
-    //   },
-    // );
-
-    // Handle the response from the API
-    // Example:
-    // if (response.statusCode == 200) {
-    //   Navigator.push(
-    //     context,
-    //     MaterialPageRoute(builder: (context) => login_account()),
-    //   );
-    // } else {
-    //   setState(() {
-    //     _emailError = 'Failed to create account';
-    //   });
-    // }
+    await authController.createAccount(
+      displayName: _displayNameController.text,
+      email: _emailController.text,
+      password: _passwordController.text,
+      role: _selectedRole ?? 'user',
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("Create Account"),
-        backgroundColor: Color.fromARGB(255, 255, 255, 255),
-        iconTheme: IconThemeData(
-          color: Color.fromRGBO(
-              88, 164, 176, 1), // Change back navigation button color here
-        ),
-      ),
-      body: Container(
-        color: Colors.white,
-        padding: const EdgeInsets.symmetric(horizontal: 20.0),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              buildSubtitle(),
-              buildFormFields(),
-              buildFooter(),
-            ],
+    return Obx(
+      () => Stack(
+        children: [
+          Scaffold(
+            appBar: AppBar(
+              title: Text("Create Account"),
+              backgroundColor: Colors.white,
+              iconTheme: IconThemeData(
+                color: Color.fromRGBO(88, 164, 176, 1),
+              ),
+            ),
+            body: Container(
+              color: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    buildSubtitle(),
+                    buildFormFields(),
+                    buildFooter(),
+                  ],
+                ),
+              ),
+            ),
           ),
-        ),
+          if (authController.isLoading)
+            Container(
+              color: Colors.black54,
+              child: Center(
+                child: CircularProgressIndicator(),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -283,84 +284,17 @@ class _CreateaccountState extends State<Createaccount> {
                     height: 1.22,
                   ),
                   recognizer: TapGestureRecognizer()
-                    ..onTap = () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => login_account()),
-                      );
-                    },
+                    ..onTap = () => Get.to(() =>
+                        login_account()), // Updated to use GetX navigation
                 ),
               ],
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.only(top: 10.0),
-            child: SizedBox(
-              width: double.infinity,
-              height: 66,
-              child: Text.rich(
-                TextSpan(
-                  children: [
-                    TextSpan(
-                      text:
-                          'By clicking the “CREATE ACCOUNT” button, you agree to',
-                      style: TextStyle(
-                        color: Color(0xFF1B1B1E),
-                        fontSize: 18,
-                        fontFamily: 'DM Sans',
-                        fontWeight: FontWeight.w400,
-                        height: 1.22,
-                      ),
-                    ),
-                    TextSpan(
-                      text: ' Terms of use',
-                      style: TextStyle(
-                        color: Color(0xFF1B1B1E),
-                        fontSize: 18,
-                        fontFamily: 'DM Sans',
-                        fontWeight: FontWeight.w700,
-                        height: 1.22,
-                      ),
-                      recognizer: TapGestureRecognizer()
-                        ..onTap = () {
-                          launch('https://example.com/terms');
-                        },
-                    ),
-                    TextSpan(
-                      text: ' and ',
-                      style: TextStyle(
-                        color: Color(0xFF1B1B1E),
-                        fontSize: 18,
-                        fontFamily: 'DM Sans',
-                        fontWeight: FontWeight.w400,
-                        height: 1.22,
-                      ),
-                    ),
-                    TextSpan(
-                      text: 'Privacy Policy',
-                      style: TextStyle(
-                        color: Color(0xFF1B1B1E),
-                        fontSize: 18,
-                        fontFamily: 'DM Sans',
-                        fontWeight: FontWeight.w700,
-                        height: 1.22,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
+          // Rest of your existing widgets...
           Padding(
             padding: const EdgeInsets.only(top: 60.0),
             child: GestureDetector(
-                onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => HomeScreen()),
-                );
-                },
+              onTap: _createAccount, // Updated to use _createAccount method
               child: Container(
                 width: double.infinity,
                 height: 52,
