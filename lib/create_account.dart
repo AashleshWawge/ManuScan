@@ -1,8 +1,9 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:mysql1/mysql1.dart';
+import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'login_page.dart';
+import 'controllers/auth_controller.dart';
 
 class Createaccount extends StatefulWidget {
   const Createaccount({super.key});
@@ -12,6 +13,7 @@ class Createaccount extends StatefulWidget {
 }
 
 class _CreateaccountState extends State<Createaccount> {
+  final AuthController authController = Get.find<AuthController>();
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
   final TextEditingController _displayNameController = TextEditingController();
@@ -26,112 +28,59 @@ class _CreateaccountState extends State<Createaccount> {
   String? _roleError;
   String? _selectedRole;
 
-  Future<void> _testDbConnection() async {
-    // MySQL connection settings
-    final settings = ConnectionSettings(
-      host: '10.0.2.220',
-      user: 'root',
-      password: 'root',
-      port: 3306,
-      db: 'danadb',
-    );
-
-    try {
-      final conn = await MySqlConnection.connect(settings);
-      await conn.close();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Database connection successful')),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Database connection failed: $e')),
-      );
-    }
-  }
-
   Future<void> _createAccount() async {
-    final String displayName = _displayNameController.text;
-    final String password = _passwordController.text;
-    final String role = _selectedRole ?? 'user';
-
-    // MySQL connection settings
-    final settings = ConnectionSettings(
-      host: '10.0.2.220',
-      user: 'root',
-      password: 'root',
-      port: 3306,
-      db: 'danadb',
-    );
-
-    try {
-      final conn = await MySqlConnection.connect(settings);
-
-      // Upsert query
-      final result = await conn.query(
-        '''
-        INSERT INTO users (user_id, username, password, role, created_at)
-        VALUES (1, ?, ?, ?, NOW())
-        ON DUPLICATE KEY UPDATE
-          username = VALUES(username),
-          password = VALUES(password),
-          role = VALUES(role),
-          created_at = VALUES(created_at);
-        ''',
-        [displayName, password, role],
-      );
-
-      await conn.close();
-
-      if (result.affectedRows! > 0) {
-        // Handle successful account creation
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => login_account()),
-        );
-      } else {
-        // Handle account creation failure
-        setState(() {
-          _emailError = 'Failed to create account';
-        });
-      }
-    } catch (e) {
-      // Handle connection or query error
-      setState(() {
-        _emailError = 'Error: $e';
-      });
+    if (_displayNameError != null ||
+        _emailError != null ||
+        _passwordError != null ||
+        _confirmPasswordError != null ||
+        _roleError != null) {
+      return;
     }
+
+    await authController.createAccount(
+      displayName: _displayNameController.text,
+      email: _emailController.text,
+      password: _passwordController.text,
+      role: _selectedRole ?? 'user',
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("Create Account"),
-        backgroundColor: Color.fromARGB(255, 255, 255, 255),
-        iconTheme: IconThemeData(
-          color: Color.fromRGBO(
-              88, 164, 176, 1), // Change back navigation button color here
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.wifi),
-            onPressed: _testDbConnection,
+    return Obx(
+      () => Stack(
+        children: [
+          Scaffold(
+            appBar: AppBar(
+              title: Text("Create Account"),
+              backgroundColor: Colors.white,
+              iconTheme: IconThemeData(
+                color: Color.fromRGBO(88, 164, 176, 1),
+              ),
+            ),
+            body: Container(
+              color: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    buildSubtitle(),
+                    buildFormFields(),
+                    buildFooter(),
+                  ],
+                ),
+              ),
+            ),
           ),
+          if (authController.isLoading)
+            Container(
+              color: Colors.black54,
+              child: Center(
+                child: CircularProgressIndicator(),
+              ),
+            ),
         ],
-      ),
-      body: Container(
-        color: Colors.white,
-        padding: const EdgeInsets.symmetric(horizontal: 20.0),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              buildSubtitle(),
-              buildFormFields(),
-              buildFooter(),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -335,84 +284,17 @@ class _CreateaccountState extends State<Createaccount> {
                     height: 1.22,
                   ),
                   recognizer: TapGestureRecognizer()
-                    ..onTap = () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => login_account()),
-                      );
-                    },
+                    ..onTap = () => Get.to(() =>
+                        login_account()), // Updated to use GetX navigation
                 ),
               ],
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.only(top: 10.0),
-            child: SizedBox(
-              width: double.infinity,
-              height: 66,
-              child: Text.rich(
-                TextSpan(
-                  children: [
-                    TextSpan(
-                      text:
-                          'By clicking the “CREATE ACCOUNT” button, you agree to',
-                      style: TextStyle(
-                        color: Color(0xFF1B1B1E),
-                        fontSize: 18,
-                        fontFamily: 'DM Sans',
-                        fontWeight: FontWeight.w400,
-                        height: 1.22,
-                      ),
-                    ),
-                    TextSpan(
-                      text: ' Terms of use',
-                      style: TextStyle(
-                        color: Color(0xFF1B1B1E),
-                        fontSize: 18,
-                        fontFamily: 'DM Sans',
-                        fontWeight: FontWeight.w700,
-                        height: 1.22,
-                      ),
-                      recognizer: TapGestureRecognizer()
-                        ..onTap = () async {
-                          const url = 'https://www.google.com/';
-                          if (await canLaunchUrl(Uri.parse(url))) {
-                            await launchUrl(Uri.parse(url));
-                          } else {
-                            throw 'Could not load $url';
-                          }
-                        },
-                    ),
-                    TextSpan(
-                      text: ' and ',
-                      style: TextStyle(
-                        color: Color(0xFF1B1B1E),
-                        fontSize: 18,
-                        fontFamily: 'DM Sans',
-                        fontWeight: FontWeight.w400,
-                        height: 1.22,
-                      ),
-                    ),
-                    TextSpan(
-                      text: 'Privacy Policy',
-                      style: TextStyle(
-                        color: Color(0xFF1B1B1E),
-                        fontSize: 18,
-                        fontFamily: 'DM Sans',
-                        fontWeight: FontWeight.w700,
-                        height: 1.22,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
+          // Rest of your existing widgets...
           Padding(
             padding: const EdgeInsets.only(top: 60.0),
             child: GestureDetector(
-              onTap: _createAccount,
+              onTap: _createAccount, // Updated to use _createAccount method
               child: Container(
                 width: double.infinity,
                 height: 52,

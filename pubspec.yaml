@@ -16,6 +16,9 @@ dependencies:
   url_launcher: ^6.3.1
   http: ^0.13.3
   mysql1: ^0.19.2
+  mobile_scanner: ^6.0.6
+  image_picker: ^1.1.2
+  get: ^4.7.2
 
 dev_dependencies:
   flutter_test:
@@ -26,7 +29,7 @@ dev_dependencies:
 flutter_icons:
   android: true
   ios: false
-  image_path: "assets/icons/app_icon.png" # Ensure this path is correct
+  image_path: "assets/icons/app_icon.jpg" # Ensure this path is correct
 
 flutter:
   uses-material-design: true
