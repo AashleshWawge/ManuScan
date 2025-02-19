@@ -161,7 +161,14 @@ class _DefectDetectionScreenState extends State<DefectDetectionScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 60),
+            const SizedBox(height: 25),
+            Center(
+              child: Text(
+                "OR",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+            const SizedBox(height: 10),
             Center(
               child: ElevatedButton.icon(
                 onPressed: () {

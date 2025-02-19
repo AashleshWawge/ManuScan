@@ -3,9 +3,9 @@ import 'package:manuscan/notification.dart';
 import 'package:manuscan/settings.dart';
 import 'package:manuscan/profile.dart';
 import 'package:manuscan/widgets/custom_bottom_navigation_bar.dart';
-import 'defectdetection/defect_detection.dart';
-import 'palletreturn/pallet_return.dart';
-import 'palletdispatch/pallet_dispatch.dart';
+import 'security_dispatch.dart';
+import 'security_return.dart';
+
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

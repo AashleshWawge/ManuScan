@@ -162,7 +162,14 @@ class _PalletDispatchScreen1State extends State<PalletDispatchScreen1> {
                 ),
               ),
             ),
-            const SizedBox(height: 60),
+            const SizedBox(height: 25),
+            Center(
+              child: Text(
+                "OR",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+            const SizedBox(height: 10),
             Center(
               child: ElevatedButton.icon(
                 onPressed: () {

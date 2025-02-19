@@ -155,15 +155,82 @@ class _CustomReturnScannerScreenState extends State<CustomReturnScannerScreen> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
+        String selectedReturnStatus = 'Returned';
         return AlertDialog(
           title: const Text('Pallet scanned successfully!'),
-          content: Text(code),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(code),
+              const SizedBox(height: 20),
+              DropdownButton<String>(
+                value: selectedReturnStatus,
+                onChanged: (String? newValue) {
+                  setState(() {
+                    selectedReturnStatus = newValue!;
+                  });
+                },
+                items: <String>['Returned', 'Not Returned']
+                    .map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('NEXT'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _showConditionStatusDialog(code, selectedReturnStatus);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showConditionStatusDialog(String code, String returnStatus) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        String selectedConditionStatus = 'OK';
+        return AlertDialog(
+          title: const Text('Select Condition Status'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DropdownButton<String>(
+                value: selectedConditionStatus,
+                onChanged: (String? newValue) {
+                  setState(() {
+                    selectedConditionStatus = newValue!;
+                  });
+                },
+                items: <String>['OK', 'Scrap', 'Repair']
+                    .map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
           actions: <Widget>[
             TextButton(
               child: const Text('OK'),
               onPressed: () {
                 Navigator.of(context).pop();
-                Navigator.pop(context, code);
+                Navigator.pop(context, {
+                  'code': code,
+                  'returnStatus': returnStatus,
+                  'conditionStatus': selectedConditionStatus
+                });
               },
             ),
           ],
@@ -190,11 +257,13 @@ class PalletReturnScreen extends StatefulWidget {
 
 class _PalletReturnScreenState extends State<PalletReturnScreen> {
   List<bool> returnedStatus = [];
+  List<String> palletStatus = [];
 
   @override
   void initState() {
     super.initState();
     returnedStatus = List<bool>.from(widget.scannedPallets.map((_) => false));
+    palletStatus = List<String>.from(widget.scannedPallets.map((_) => 'OK'));
   }
 
   @override
@@ -207,21 +276,28 @@ class _PalletReturnScreenState extends State<PalletReturnScreen> {
         context,
         widget.scannedPallets,
         returnedStatus,
+        palletStatus,
         (index) {
           setState(() {
             widget.scannedPallets.removeAt(index);
             returnedStatus.removeAt(index);
+            palletStatus.removeAt(index);
           });
         },
         widget.returnId,
         widget.challanId,
-        (scannedCode) {
-          if (scannedCode != null &&
-              !widget.scannedPallets.contains(scannedCode)) {
-            setState(() {
-              widget.scannedPallets.add(scannedCode);
-              returnedStatus.add(false);
-            });
+        (result) {
+          if (result != null && result is Map) {
+            String scannedCode = result['code']!;
+            String returnStatus = result['returnStatus']!;
+            String conditionStatus = result['conditionStatus']!;
+            if (!widget.scannedPallets.contains(scannedCode)) {
+              setState(() {
+                widget.scannedPallets.add(scannedCode);
+                returnedStatus.add(returnStatus == 'Returned');
+                palletStatus.add(conditionStatus);
+              });
+            }
           }
         },
       ),
@@ -234,10 +310,11 @@ Widget PalletReturn3(
     BuildContext context,
     List<String> pallets,
     List<bool> returnedStatus,
+    List<String> palletStatus,
     Function(int) onDelete,
     String returnId,
     String challanId,
-    Function(String?) onScanned) {
+    Function(dynamic) onScanned) {
   return Padding(
     padding: const EdgeInsets.all(16.0),
     child: Column(
@@ -261,6 +338,7 @@ Widget PalletReturn3(
                     itemCount: pallets.length,
                     itemBuilder: (context, index) {
                       bool isReturned = returnedStatus[index];
+                      String status = palletStatus[index];
                       return Container(
                         padding: const EdgeInsets.symmetric(
                             vertical: 12, horizontal: 10),
@@ -272,24 +350,77 @@ Widget PalletReturn3(
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text("PALLET ID : ${pallets[index]}"),
-                            Row(
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Icon(
-                                  isReturned
-                                      ? Icons.check_circle
-                                      : Icons.cancel,
-                                  color: isReturned ? Colors.blue : Colors.red,
-                                  size: 16,
-                                ),
-                                const SizedBox(width: 5),
                                 Text(
-                                  isReturned ? "Returned" : "Not Returned",
-                                  style: TextStyle(
-                                    color:
-                                        isReturned ? Colors.blue : Colors.red,
-                                    fontWeight: FontWeight.w500,
-                                  ),
+                                  "PALLET ID :",
+                                  style: const TextStyle(
+                                      fontFamily: "DMSans",
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500),
+                                ),
+                                Text(
+                                  pallets[index],
+                                  style: const TextStyle(
+                                      fontFamily: "DMSans",
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500),
+                                ),
+                              ],
+                            ),
+                            Column(
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(
+                                      isReturned
+                                          ? Icons.check_circle
+                                          : Icons.cancel,
+                                      color:
+                                          isReturned ? Colors.blue : Colors.red,
+                                      size: 16,
+                                    ),
+                                    const SizedBox(width: 5),
+                                    Text(
+                                      isReturned ? "Returned" : "Not Returned",
+                                      style: TextStyle(
+                                        color: isReturned
+                                            ? Colors.blue
+                                            : Colors.red,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      status == 'Scrap'
+                                          ? Icons.cancel
+                                          : status == 'Repair'
+                                              ? Icons.build
+                                              : Icons.check_circle,
+                                      color: status == 'Scrap'
+                                          ? Colors.red
+                                          : status == 'Repair'
+                                              ? Colors.yellow
+                                              : Colors.blue,
+                                      size: 16,
+                                    ),
+                                    const SizedBox(width: 5),
+                                    Text(
+                                      status,
+                                      style: TextStyle(
+                                        color: status == 'Scrap'
+                                            ? Colors.red
+                                            : status == 'Repair'
+                                                ? Colors.yellow
+                                                : Colors.blue,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
@@ -343,7 +474,7 @@ Widget PalletReturn3(
           children: [
             ElevatedButton.icon(
               onPressed: () async {
-                String? scannedCode = await Navigator.push(
+                var result = await Navigator.push(
                   context,
                   MaterialPageRoute(
                       builder: (context) => CustomReturnScannerScreen(
@@ -352,7 +483,7 @@ Widget PalletReturn3(
                             returnId: returnId,
                           )),
                 );
-                onScanned(scannedCode);
+                onScanned(result);
               },
               icon: const Icon(Icons.qr_code_scanner, color: Colors.white),
               label: const Text("SCAN PALLET",

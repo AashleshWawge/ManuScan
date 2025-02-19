@@ -4,6 +4,8 @@ import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'login_page.dart';
 import 'controllers/auth_controller.dart';
+import 'home_screen.dart';
+// import 'package:manuscan/security/homescreen.dart';
 
 class Createaccount extends StatefulWidget {
   const Createaccount({super.key});
@@ -291,10 +293,15 @@ class _CreateaccountState extends State<Createaccount> {
             ),
           ),
           // Rest of your existing widgets...
-          Padding(
+            Padding(
             padding: const EdgeInsets.only(top: 60.0),
             child: GestureDetector(
-              onTap: _createAccount, // Updated to use _createAccount method
+              onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => HomeScreen()),
+              ); // Navigate to home screen
+              },
               child: Container(
                 width: double.infinity,
                 height: 52,
