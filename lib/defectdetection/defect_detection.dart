@@ -409,9 +409,8 @@ class DefectDetection3 extends StatefulWidget {
   final String challanId;
   final List<Map<String, String>> scannedPallets;
 
-  DefectDetection3(
-      {Key? key, required this.challanId, required this.scannedPallets})
-      : super(key: key);
+  const DefectDetection3(
+      {super.key, required this.challanId, required this.scannedPallets});
 
   @override
   _DefectDetection3 createState() => _DefectDetection3();
