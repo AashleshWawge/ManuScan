@@ -9,13 +9,11 @@ class AuthController extends GetxController {
   final _currentUser = Rx<Map<String, dynamic>?>(null);
   final _isLoading = false.obs;
   final _errorMessage = ''.obs;
-  final _token = ''.obs;
 
   bool get isLoggedIn => _isLoggedIn.value;
   Map<String, dynamic>? get currentUser => _currentUser.value;
   bool get isLoading => _isLoading.value;
   String get errorMessage => _errorMessage.value;
-  String get token => _token.value;
 
   Future<void> createAccount({
     required String displayName,
@@ -90,12 +88,12 @@ class AuthController extends GetxController {
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
         print('Login successful: $responseData');
-        _token.value = responseData['token'];
         _currentUser.value = {
-          'email': email,
+          'user_id': responseData['user']['user_id'] ?? '',
+          'user_name': responseData['user']['user_name'] ?? '',
         };
-        _isLoggedIn.value = true;
         Get.offAll(() => HomeScreen());
+        _isLoggedIn.value = true;
       } else {
         final responseData = jsonDecode(response.body);
         print('Login failed: $responseData');
@@ -112,7 +110,6 @@ class AuthController extends GetxController {
   void logout() {
     _isLoggedIn.value = false;
     _currentUser.value = null;
-    _token.value = '';
     Get.offAll(() => OnboardingScreen());
   }
 }
