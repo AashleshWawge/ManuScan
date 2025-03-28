@@ -1,5 +1,6 @@
 import 'package:manuscan/onboarding_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:manuscan/controllers/auth_controller.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -39,16 +40,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
         return AlertDialog(
           title: const Text('Logout'),
           content: const Text('Are you sure you want to logout?'),
-          actions: [
+            actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: const Text('Cancel'),
             ),
             TextButton(
               onPressed: () {
-                // Add your logout logic here
-                Navigator.pop(context);
-                // Navigate to login screen or perform logout
+              // Call the logout function from the auth_controller
+              AuthController().logout();
+              // Navigate to OnboardingScreen and remove all previous routes
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (context) => const OnboardingScreen()),
+                (Route<dynamic> route) => false,
+              );
               },
               child: const Text('Logout', style: TextStyle(color: Colors.red)),
             ),

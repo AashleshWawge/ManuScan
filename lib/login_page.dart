@@ -28,6 +28,20 @@ class _login_account extends State<login_account> {
       _emailController.text,
       _passwordController.text,
     );
+
+    if (authController.isLoggedIn) {
+      // Assuming you have this getter in AuthController
+      Get.snackbar(
+        'Success',
+        'Login Successful!',
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+        duration: Duration(seconds: 3),
+        margin: EdgeInsets.all(20),
+      );
+      // ...existing navigation logic...
+    }
   }
 
   @override

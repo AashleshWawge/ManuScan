@@ -7,18 +7,18 @@ import 'security_dispatch.dart';
 import 'security_return.dart';
 
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+class SecurityScreen extends StatefulWidget {
+  const SecurityScreen({super.key});
 
   @override
-  _HomeScreenState createState() => _HomeScreenState();
+  _SecurityScreenState createState() => _SecurityScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _SecurityScreenState extends State<SecurityScreen> {
   int _currentIndex = 0;
 
   final List<Widget> _screens = [
-    const HomeScreenContent(),
+    const SecurityScreenContent(),
     const NotificationsScreen(),
     const SettingsScreen(),
     ProfileScreen(),
@@ -43,8 +43,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-class HomeScreenContent extends StatelessWidget {
-  const HomeScreenContent({super.key});
+class SecurityScreenContent extends StatelessWidget {
+  const SecurityScreenContent({super.key});
 
   @override
   Widget build(BuildContext context) {

@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -9,11 +11,13 @@ class AuthController extends GetxController {
   final _currentUser = Rx<Map<String, dynamic>?>(null);
   final _isLoading = false.obs;
   final _errorMessage = ''.obs;
+  final _token = RxString('');
 
   bool get isLoggedIn => _isLoggedIn.value;
   Map<String, dynamic>? get currentUser => _currentUser.value;
   bool get isLoading => _isLoading.value;
   String get errorMessage => _errorMessage.value;
+  String get token => _token.value;
 
   Future<void> createAccount({
     required String displayName,
@@ -92,6 +96,8 @@ class AuthController extends GetxController {
           'user_id': responseData['user']['user_id'] ?? '',
           'user_name': responseData['user']['user_name'] ?? '',
         };
+        // Store the token
+        _token.value = responseData['token'] ?? '';
         Get.offAll(() => HomeScreen());
         _isLoggedIn.value = true;
       } else {
@@ -110,6 +116,7 @@ class AuthController extends GetxController {
   void logout() {
     _isLoggedIn.value = false;
     _currentUser.value = null;
+    _token.value = ''; // Clear the token on logout
     Get.offAll(() => OnboardingScreen());
   }
 }

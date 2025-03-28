@@ -233,8 +233,17 @@ class _PalletReturnScreen1State extends State<PalletReturnScreen1> {
                 const SizedBox(height: 15),
                 ElevatedButton(
                   onPressed: () {
+                    if (challanIdController.text.trim().isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Please enter a Challan ID'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      return;
+                    }
                     setState(() {
-                      challanId = challanIdController.text;
+                      challanId = challanIdController.text.trim();
                     });
                     Navigator.pop(context);
                     Navigator.push(
@@ -269,7 +278,7 @@ class _PalletReturnScreen1State extends State<PalletReturnScreen1> {
 
 class PalletReturn2 extends StatefulWidget {
   final String challanId;
-  final List<String> scannedPallets;
+  final List<Map<String, String>> scannedPallets;
 
   const PalletReturn2(
       {super.key, required this.challanId, required this.scannedPallets});
@@ -368,23 +377,17 @@ class _PalletReturn2State extends State<PalletReturn2> {
             // Scan Pallet Button
             Center(
               child: ElevatedButton.icon(
-                onPressed: () async {
-                  String? scannedCode = await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => PalletReturn3(
-                        challanId: widget.challanId,
-                        scannedPallets: widget.scannedPallets,
-                      ),
-                    ),
-                  );
-                  if (scannedCode != null &&
-                      !widget.scannedPallets.contains(scannedCode)) {
-                    setState(() {
-                      widget.scannedPallets.add(scannedCode);
-                    });
-                  }
-                },
+              onPressed: () {
+                Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => PalletReturn3(
+                  challanId: widget.challanId,
+                  scannedPallets: widget.scannedPallets,
+                  ),
+                ),
+                );
+              },
                 icon: const Icon(Icons.list, color: Colors.white),
                 label: const Text("VIEW PALLET LIST",
                     style: TextStyle(color: Colors.white)),
@@ -407,7 +410,7 @@ class _PalletReturn2State extends State<PalletReturn2> {
 
 class PalletReturn3 extends StatefulWidget {
   final String challanId;
-  final List<String> scannedPallets;
+  final List<Map<String, String>> scannedPallets;
 
   const PalletReturn3(
       {super.key, required this.challanId, required this.scannedPallets});
@@ -568,24 +571,24 @@ class _PalletReturn3 extends State<PalletReturn3> {
             const SizedBox(height: 60),
             Center(
               child: ElevatedButton.icon(
-                onPressed: () async {
-                  String? scannedCode = await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => CustomReturnScannerScreen(
-                        challanId: widget.challanId,
-                        scannedPallets: widget.scannedPallets,
-                        returnId: '',
-                      ),
-                    ),
-                  );
-                  if (scannedCode != null &&
-                      !widget.scannedPallets.contains(scannedCode)) {
-                    setState(() {
-                      widget.scannedPallets.add(scannedCode);
-                    });
-                  }
-                },
+              onPressed: () async {
+                String? scannedCode = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => CustomReturnScannerScreen(
+                  challanId: widget.challanId,
+                  scannedPallets: widget.scannedPallets,
+                  returnId: '',
+                  ),
+                ),
+                );
+                if (scannedCode != null &&
+                  !widget.scannedPallets.contains({"palletId": scannedCode})) {
+                setState(() {
+                  widget.scannedPallets.add({"palletId": scannedCode});
+                });
+                }
+              },
                 icon: const Icon(Icons.qr_code_scanner, color: Colors.white),
                 label: const Text("SCAN PALLET",
                     style:
