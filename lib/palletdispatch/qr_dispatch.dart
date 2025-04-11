@@ -1,3 +1,4 @@
+import 'package:another_flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
 import 'package:manuscan/home_screen.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -35,9 +36,10 @@ class _PalletDispatchScreen2State extends State<PalletDispatchScreen2> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       resizeToAvoidBottomInset: false,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.white, // Ensure AppBar background is white
         elevation: 0,
         title: const Text("Pallet Dispatch",
             style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
@@ -123,28 +125,43 @@ class _PalletDispatchScreen2State extends State<PalletDispatchScreen2> {
                     },
                     icon:
                         const Icon(Icons.qr_code_scanner, color: Colors.white),
-                    label: const Text("SCAN PALLET",
-                        style: TextStyle(color: Colors.white)),
+                    label: const Text(
+                      "SCAN PALLET",
+                      style:
+                          TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                    ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.black,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
+                      foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 30, vertical: 14),
+                          vertical: 25, horizontal: 20),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 10),
                   ElevatedButton.icon(
-                    onPressed: () => showManualPalletIdPopup(context),
+                    onPressed: () {
+                      showManualPalletIdPopup(context);
+                    },
                     icon: const Icon(Icons.edit, color: Colors.white),
-                    label: const Text("ENTER PALLET ID",
-                        style: TextStyle(color: Colors.white)),
+                    label: const Text(
+                      "MANUAL ENTRY\nOF PALLET ID",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.teal,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
+                      foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 15, vertical: 14),
+                          vertical: 15, horizontal: 20),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
                   ),
                 ],
@@ -191,9 +208,14 @@ class _PalletDispatchScreen2State extends State<PalletDispatchScreen2> {
                 ElevatedButton(
                   onPressed: () {
                     if (palletIdController.text.trim().isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                          content: Text('Please enter a Pallet ID'),
-                          backgroundColor: Colors.red));
+                      Flushbar(
+                        message: 'Please enter a Pallet ID',
+                        backgroundColor: Colors.red,
+                        margin: const EdgeInsets.all(10),
+                        borderRadius: BorderRadius.circular(8),
+                        duration: const Duration(seconds: 3),
+                        flushbarPosition: FlushbarPosition.TOP,
+                      ).show(context);
                       return;
                     }
                     print("Manual entry: ${palletIdController.text.trim()}");
@@ -252,6 +274,12 @@ class _CustomScannerScreenState extends State<CustomScannerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Scan Pallet QR'),
+        backgroundColor: Colors.teal,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        ),
       body: Stack(
         children: [
           MobileScanner(
@@ -318,19 +346,19 @@ class _CustomScannerScreenState extends State<CustomScannerScreen> {
                         onChanged: controller.setZoom)))
               ])),
           Positioned(
-            bottom: 30,
-            left: 30,
-            right: 30,
+            bottom: 20,
+            left: 20,
+            right: 20,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 ElevatedButton(
                     style:
-                        ElevatedButton.styleFrom(backgroundColor: Colors.grey),
+                        ElevatedButton.styleFrom(backgroundColor: Colors.teal,foregroundColor: Colors.white),
                     onPressed: () => Navigator.pop(context),
                     child: const Text('BACK')),
                 ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.grey),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.teal,foregroundColor: Colors.white),
                   onPressed: () => Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -539,7 +567,8 @@ class PalletDispatch3 extends StatelessWidget {
                           fontFamily: "DMSans",
                           fontSize: 18,
                           fontWeight: FontWeight.bold)))),
-              const SizedBox(height: 15),
+              const SizedBox(
+                  height: 10), // Adjusted spacing to move buttons upwards
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -562,7 +591,7 @@ class PalletDispatch3 extends StatelessWidget {
                       style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.black87,
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          padding: const EdgeInsets.symmetric(vertical: 5),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8))),
                     ),
@@ -575,7 +604,7 @@ class PalletDispatch3 extends StatelessWidget {
                       style: ElevatedButton.styleFrom(
                           backgroundColor:
                               const Color.fromRGBO(216, 219, 226, 1),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          padding: const EdgeInsets.symmetric(vertical: 5),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8))),
                       child: const Text("CONFIRM",
@@ -588,6 +617,7 @@ class PalletDispatch3 extends StatelessWidget {
                   ),
                 ],
               ),
+              const SizedBox(height: 30),
             ],
           ),
         ),

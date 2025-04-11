@@ -1,8 +1,9 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'forgot_password.dart';
-import 'create_account.dart';
+import 'package:manuscan/home_screen.dart';
+import 'unused/forgot_password.dart';
+import 'unused/create_account.dart';
 import 'controllers/auth_controller.dart';
 
 class login_account extends StatefulWidget {
@@ -20,6 +21,50 @@ class _login_account extends State<login_account> {
   String? _passwordError;
 
   Future<void> _login() async {
+    // Added validation for email format and wrong password error message
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+      Get.snackbar(
+        'Error',
+        'Please enter both email and password.',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+        duration: Duration(seconds: 3),
+        margin: EdgeInsets.all(20),
+      );
+      return;
+    }
+
+    // Validate email format
+    final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+    if (!emailRegex.hasMatch(_emailController.text)) {
+      Get.snackbar(
+        'Error',
+        'Please enter a valid email address.',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+        duration: Duration(seconds: 3),
+        margin: EdgeInsets.all(20),
+      );
+      return;
+    }
+
+    // Simulate wrong password error for demonstration
+    if (_emailController.text == 'test@example.com' &&
+        _passwordController.text != 'password123') {
+      Get.snackbar(
+        'Error',
+        'Wrong password for the entered email ID.',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+        duration: Duration(seconds: 3),
+        margin: EdgeInsets.all(20),
+      );
+      return;
+    }
+
     if (_emailError != null || _passwordError != null) {
       return;
     }
@@ -66,7 +111,10 @@ class _login_account extends State<login_account> {
                       buildSubtitle(),
                       SizedBox(height: 100),
                       buildFormFields(),
+                      // Commented out the 'Forgot Password' functionality
+                      /*
                       buildForgotPassword(context),
+                      */
                       buildFooter(),
                     ],
                   ),
@@ -128,34 +176,34 @@ class _login_account extends State<login_account> {
     );
   }
 
-  Widget buildForgotPassword(BuildContext context) {
-    return Align(
-      alignment: Alignment.centerRight,
-      child: Padding(
-        padding: const EdgeInsets.only(top: 15.0),
-        child: Text.rich(
-          TextSpan(
-            text: 'Forgot Password ?',
-            style: TextStyle(
-              color: Color(0xFF58A4B0),
-              fontSize: 16,
-              fontFamily: 'DM Sans',
-              fontWeight: FontWeight.bold,
-              decoration: TextDecoration.underline,
-              decorationColor: Color(0xFF58A4B0),
-            ),
-            recognizer: TapGestureRecognizer()
-              ..onTap = () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => ForgotPassword()),
-                );
-              },
-          ),
-        ),
-      ),
-    );
-  }
+  // Widget buildForgotPassword(BuildContext context) {
+  //   return Align(
+  //     alignment: Alignment.centerRight,
+  //     child: Padding(
+  //       padding: const EdgeInsets.only(top: 15.0),
+  //       child: Text.rich(
+  //         TextSpan(
+  //           text: 'Forgot Password ?',
+  //           style: TextStyle(
+  //             color: Color(0xFF58A4B0),
+  //             fontSize: 16,
+  //             fontFamily: 'DM Sans',
+  //             fontWeight: FontWeight.bold,
+  //             decoration: TextDecoration.underline,
+  //             decorationColor: Color(0xFF58A4B0),
+  //           ),
+  //           recognizer: TapGestureRecognizer()
+  //             ..onTap = () {
+  //               Navigator.push(
+  //                 context,
+  //                 MaterialPageRoute(builder: (context) => ForgotPassword()),
+  //               );
+  //             },
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
 
   Widget buildFooter() {
     return Padding(
@@ -166,15 +214,17 @@ class _login_account extends State<login_account> {
           Text.rich(
             TextSpan(
               children: [
-                TextSpan(
-                  text: 'Dont have an account yet ?\n',
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 18,
-                    fontFamily: 'DM Sans',
-                    height: 1.22,
-                  ),
-                ),
+                // TextSpan(
+                //   text: 'Dont have an account yet ?\n',
+                //   style: TextStyle(
+                //     color: Colors.black,
+                //     fontSize: 18,
+                //     fontFamily: 'DM Sans',
+                //     height: 1.22,
+                //   ),
+                // ),
+                // Commented out the 'Create an account' functionality
+                /*
                 TextSpan(
                   text: 'Create an account here',
                   style: TextStyle(
@@ -190,13 +240,20 @@ class _login_account extends State<login_account> {
                     ..onTap = () => Get.to(() =>
                         Createaccount()), // Updated to use GetX navigation
                 ),
+                */
               ],
             ),
           ),
           Padding(
-            padding: const EdgeInsets.only(top: 130.0),
+            padding: const EdgeInsets.only(top: 220.0),
             child: GestureDetector(
-              onTap: _login, // Updated to use _login method
+              // onTap: _login,
+              onTap:(){
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => HomeScreen()),
+                ); 
+              }, // Updated to use _login method
               child: Container(
                 width: double.infinity,
                 height: 52,

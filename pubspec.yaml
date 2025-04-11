@@ -19,6 +19,7 @@ dependencies:
   mobile_scanner: ^6.0.6
   image_picker: ^1.1.2
   get: ^4.7.2
+  another_flushbar: ^1.12.30
 
 dev_dependencies:
   flutter_test:

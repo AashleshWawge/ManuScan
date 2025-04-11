@@ -1,9 +1,9 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'login_page.dart';
-import 'controllers/auth_controller.dart';
-import 'home_screen.dart';
+import '../login_page.dart';
+import '../controllers/auth_controller.dart';
+import '../home_screen.dart';
 import 'package:manuscan/security/homescreen.dart';
 
 class Createaccount extends StatefulWidget {

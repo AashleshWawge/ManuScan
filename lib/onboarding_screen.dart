@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'create_account.dart';
+import 'unused/create_account.dart';
 import 'login_page.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -87,12 +87,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
             Positioned(
-              bottom: 50,
+              bottom: 80, // Changed from 50 to 100 to shift the button upwards
               left: 20,
               right: 20,
               child: Column(
                 children: <Widget>[
                   const SizedBox(height: 200),
+                  // Commented out the 'Create Account' functionality
+                  /*
                   ElevatedButton(
                     onPressed: () {
                       Navigator.push(
@@ -114,6 +116,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       ),
                     ),
                   ),
+                  */
                   const SizedBox(height: 10),
                   ElevatedButton(
                     onPressed: () {
@@ -125,14 +128,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     },
                     style: TextButton.styleFrom(
                       minimumSize: const Size(double.infinity, 50),
-                      backgroundColor: Color.fromRGBO(216, 219, 226, 1),
+                      backgroundColor: Color.fromRGBO(55, 63, 81, 1),
                       elevation: 5,
                       shadowColor: Colors.black.withOpacity(0.2),
                     ),
                     child: const Text(
                       'LOG IN',
                       style: TextStyle(
-                        color: Colors.black,
+                        color: Colors.white,
                         fontWeight: FontWeight.bold,
                       ),
                     ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'qr_dispatch.dart'; // Assuming this is PalletDispatchScreen2
 import '../controllers/pallet_dispatch_controller.dart';
+import 'package:another_flushbar/flushbar.dart';
 
 class PalletDispatchScreen1 extends StatefulWidget {
   const PalletDispatchScreen1({super.key});
@@ -24,6 +25,8 @@ class _PalletDispatchScreen1State extends State<PalletDispatchScreen1> {
 
   final PalletDispatchController controller =
       Get.find<PalletDispatchController>(tag: 'palletDispatch');
+
+  String errorMessage = '';
 
   @override
   Widget build(BuildContext context) {
@@ -234,24 +237,28 @@ class _PalletDispatchScreen1State extends State<PalletDispatchScreen1> {
                 ElevatedButton(
                   onPressed: () {
                     if (challanIdController.text.trim().isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text('Please enter a Challan ID'),
-                            backgroundColor: Colors.red),
-                      );
-                      return;
-                    }
-                    controller.setChallanId(challanIdController.text.trim());
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => PalletDispatchScreen2(
-                          challanId: challanIdController.text.trim(),
-                          scannedPallets: controller.scannedPallets,
+                      Flushbar(
+                        message: 'Please enter a Challan ID',
+                        backgroundColor: Colors.red,
+                        margin: const EdgeInsets.all(10),
+                        borderRadius: BorderRadius.circular(8),
+                        duration: const Duration(seconds: 3),
+                        flushbarPosition:
+                            FlushbarPosition.TOP, // Display at the top
+                      ).show(context);
+                    } else {
+                      controller.setChallanId(challanIdController.text.trim());
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => PalletDispatchScreen2(
+                            challanId: challanIdController.text.trim(),
+                            scannedPallets: controller.scannedPallets,
+                          ),
                         ),
-                      ),
-                    );
+                      );
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.black,
