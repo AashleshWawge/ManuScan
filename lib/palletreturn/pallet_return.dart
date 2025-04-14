@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:manuscan/palletreturn/qr_return.dart';
 import 'package:another_flushbar/flushbar.dart';
+import 'package:tflite_flutter/tflite_flutter.dart';
+import 'dart:io';
+import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 
 class PalletReturnScreen1 extends StatefulWidget {
   const PalletReturnScreen1({super.key});
@@ -299,8 +303,7 @@ class _PalletReturnScreen1State extends State<PalletReturnScreen1> {
                         margin: const EdgeInsets.all(10),
                         borderRadius: BorderRadius.circular(8),
                         duration: const Duration(seconds: 3),
-                        flushbarPosition:
-                            FlushbarPosition.TOP, // Display at the top
+                        flushbarPosition: FlushbarPosition.TOP,
                       ).show(context);
                     } else {
                       setState(() {
