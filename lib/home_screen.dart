@@ -3,9 +3,10 @@ import 'package:manuscan/notification.dart';
 import 'package:manuscan/settings.dart';
 import 'package:manuscan/profile.dart';
 import 'package:manuscan/widgets/custom_bottom_navigation_bar.dart';
-// import 'defectdetection/defect_detection.dart';
-import 'palletreturn/pallet_return.dart';
+import 'package:manuscan/controllers/auth_controller.dart'; // Change this import
 import 'palletdispatch/pallet_dispatch.dart';
+import 'package:get/get.dart';
+import 'palletreturn/qr_return.dart'; // Ensure this import exposes showChallanIdPopup
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,12 +18,20 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
 
-  final List<Widget> _screens = [
-    const HomeScreenContent(),
-    const NotificationsScreen(),
-    const SettingsScreen(),
-    ProfileScreen(),
-  ];
+  final authController = Get.find<AuthController>(); // Use find instead of put
+
+  late final List<Widget> _screens;
+
+  @override
+  void initState() {
+    super.initState();
+    _screens = [
+      HomeScreenContent(authController: authController),
+      const NotificationsScreen(),
+      const SettingsScreen(),
+      ProfileScreen(),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,14 +46,25 @@ class _HomeScreenState extends State<HomeScreen> {
         },
       ),
       body: SafeArea(
-        child: _screens[_currentIndex],
+        child: Obx(() {
+          if (authController.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (_currentIndex == 0) {
+            return HomeScreenContent(authController: authController);
+          }
+          return _screens[_currentIndex];
+        }),
       ),
     );
   }
 }
 
 class HomeScreenContent extends StatelessWidget {
-  const HomeScreenContent({super.key});
+  final AuthController authController;
+
+  const HomeScreenContent({Key? key, required this.authController})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +73,7 @@ class HomeScreenContent extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildHeader(),
+          Obx(() => _buildHeader(userName: authController.firstName)),
           const SizedBox(height: 20),
           const Text(
             "What would you like to do ?",
@@ -81,35 +101,16 @@ class HomeScreenContent extends StatelessWidget {
             description:
                 "Handle the return of pallets efficiently by recording inbound shipments, verifying conditions, and updating stock levels.",
             onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => const PalletReturnScreen1()),
-              );
+              // Call showChallanIdPopup to start the return process.
+              showChallanIdPopup(context);
             },
           ),
-          // _buildActionCard(
-          //   context: context,
-          //   imagePath: 'assets/images/dd.png', // Add your image path here
-          //   title: "Defect Detection",
-          //   description:
-          //       "Identify and track defective pallets through inspection, categorize issues, and take necessary actions for repairs or replacements.",
-          //   onTap: () {
-          //     Navigator.push(
-          //       context,
-          //       MaterialPageRoute(
-          //           builder: (context) => const DefectDetectionScreen()),
-          //     );
-          //   },
-          // ),
         ],
       ),
     );
   }
 
-  Widget _buildHeader() {
-    final String userName = "John"; // Replace with dynamic user name
-
+  Widget _buildHeader({required String userName}) {
     return Container(
       padding: const EdgeInsets.all(16),
       child: Stack(

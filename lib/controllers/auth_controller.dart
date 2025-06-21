@@ -12,12 +12,37 @@ class AuthController extends GetxController {
   final _isLoading = false.obs;
   final _errorMessage = ''.obs;
   final _token = RxString('');
+  final RxString username = 'Security Guard'.obs;
+
+  // Change from RxString to getter/setter pattern
+  final _firstName = RxString('Security Guard');
+  String get firstName => _firstName.value;
+  set firstName(String value) => _firstName.value = value;
+
+  final RxString _lastName = ''.obs;
+  final RxString _email = ''.obs;
+  final RxString _role = ''.obs;
 
   bool get isLoggedIn => _isLoggedIn.value;
   Map<String, dynamic>? get currentUser => _currentUser.value;
   bool get isLoading => _isLoading.value;
   String get errorMessage => _errorMessage.value;
   String get token => _token.value;
+  String get userFirstName => firstName;
+
+  String get lastName => _lastName.value;
+  String get email => _email.value;
+  String get role => _role.value;
+
+  @override
+  void onInit() {
+    super.onInit();
+    checkAuth();
+  }
+
+  void checkAuth() {
+    // Add your auth check logic here
+  }
 
   Future<void> createAccount({
     required String displayName,
@@ -62,16 +87,13 @@ class AuthController extends GetxController {
     }
   }
 
+  // Update login method to properly set firstName
   Future<void> login(String email, String password) async {
     try {
       _isLoading.value = true;
       _errorMessage.value = '';
 
-      print('Sending POST request to http://localhost:8800/Login');
-      print('Request body: ${jsonEncode(<String, String>{
-            'user_name': email,
-            'password': password,
-          })}');
+      print('Login request for user: $email');
 
       final response = await http
           .post(
@@ -86,27 +108,26 @@ class AuthController extends GetxController {
           )
           .timeout(Duration(seconds: 10));
 
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
+      print('Login response: ${response.body}');
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
-        print('Login successful: $responseData');
-        _currentUser.value = {
-          'user_id': responseData['user']['user_id'] ?? '',
-          'user_name': responseData['user']['user_name'] ?? '',
-        };
-        // Store the token
-        _token.value = responseData['token'] ?? '';
-        Get.offAll(() => HomeScreen());
+        _currentUser.value = responseData['user'];
+
+        if (responseData['user'] != null) {
+          final userData = responseData['user'] as Map<String, dynamic>;
+          _firstName.value = userData['first_name'] ?? 'Security Guard';
+          print('Set firstName to: ${firstName}');
+        }
+
         _isLoggedIn.value = true;
+        Get.offAll(() => HomeScreen());
       } else {
         final responseData = jsonDecode(response.body);
-        print('Login failed: $responseData');
         _errorMessage.value = responseData['error'] ?? 'Failed to login';
       }
     } catch (e) {
-      print('Exception: $e');
+      print('Login error: $e');
       _errorMessage.value = e.toString();
     } finally {
       _isLoading.value = false;
@@ -118,5 +139,26 @@ class AuthController extends GetxController {
     _currentUser.value = null;
     _token.value = ''; // Clear the token on logout
     Get.offAll(() => OnboardingScreen());
+  }
+
+  // Update setUserData method
+  void setUserData({
+    required String firstName,
+    required String lastName,
+    required String email,
+    required String role,
+  }) {
+    _firstName.value = firstName;
+    _lastName.value = lastName;
+    _email.value = email;
+    _role.value = role;
+  }
+
+  // Method to clear user data on logout
+  void clearUserData() {
+    _firstName.value = '';
+    _lastName.value = '';
+    _email.value = '';
+    _role.value = '';
   }
 }

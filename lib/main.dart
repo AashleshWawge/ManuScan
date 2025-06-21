@@ -1,34 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'bindings/app_bindings.dart';
 import 'onboarding_screen.dart';
-import 'controllers/auth_controller.dart';
-import 'controllers/pallet_dispatch_controller.dart';
-import 'controllers/pallet_return_controller1.dart';
+import 'security/securityscreen.dart'; // Import your home screen
+import 'package:manuscan/controllers/auth_controller.dart';
 
 void main() {
-  initializeControllers();
-  runApp(MyApp());
-}
+  WidgetsFlutterBinding.ensureInitialized();
 
-void initializeControllers() {
-  Get.put(AuthController());
-  Get.put(PalletReturnController()); // Initialize AuthController globally
-  final palletDispatchController = Get.put(PalletDispatchController(),
-      tag: 'palletDispatch', permanent: true);
-  print(
-      "Main.dart: PalletDispatchController initialized with hashCode: ${palletDispatchController.hashCode}");
+  // Initialize Getx bindings
+  AppBindings().dependencies();
+
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(context) {
+  Widget build(BuildContext context) {
     return GetMaterialApp(
-      // Changed from MaterialApp to GetMaterialApp
       debugShowCheckedModeBanner: false,
       title: 'ManuScan',
-      home: OnboardingScreen(),
+      initialBinding: AppBindings(),
+      // initialRoute: '/', // Commented out to bypass login
+      home: const SecurityScreen(), // Direct navigation to SecurityScreen
+      getPages: [
+        GetPage(name: '/', page: () => const OnboardingScreen()),
+        GetPage(
+            name: '/home', page: () => const SecurityScreen()), // <-- Add this
+      ],
     );
   }
 }

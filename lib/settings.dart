@@ -17,21 +17,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool isDarkMode = false;
 
   // Language options
-  final List<String> languages = ['English', 'Hindi', 'Marathi'];
-
-  void _handleNotificationChange(bool value) {
-    setState(() {
-      notificationsEnabled = value;
-    });
-  }
-
-  void _handleLanguageChange(String? newLanguage) {
-    if (newLanguage != null) {
-      setState(() {
-        selectedLanguage = newLanguage;
-      });
-    }
-  }
 
   void _handleLogout() {
     showDialog(
@@ -40,49 +25,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
         return AlertDialog(
           title: const Text('Logout'),
           content: const Text('Are you sure you want to logout?'),
-            actions: [
+          actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: const Text('Cancel'),
             ),
             TextButton(
               onPressed: () {
-              // Call the logout function from the auth_controller
-              AuthController().logout();
-              // Navigate to OnboardingScreen and remove all previous routes
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (context) => const OnboardingScreen()),
-                (Route<dynamic> route) => false,
-              );
+                // Call the logout function from the auth_controller
+                AuthController().logout();
+                // Navigate to OnboardingScreen and remove all previous routes
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(
+                      builder: (context) => const OnboardingScreen()),
+                  (Route<dynamic> route) => false,
+                );
               },
               child: const Text('Logout', style: TextStyle(color: Colors.red)),
             ),
           ],
-        );
-      },
-    );
-  }
-
-  void _showLanguageDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Select Language'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: languages.map((String language) {
-              return RadioListTile<String>(
-                title: Text(language),
-                value: language,
-                groupValue: selectedLanguage,
-                onChanged: (String? value) {
-                  _handleLanguageChange(value);
-                  Navigator.pop(context);
-                },
-              );
-            }).toList(),
-          ),
         );
       },
     );
@@ -135,13 +96,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return _buildSettingItem(
       icon: Icons.person_outline,
       title: 'Profile Settings',
-      onTap: () {
-        // Navigate to profile settings
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const Placeholder()),
-        );
-      },
     );
   }
 
@@ -162,11 +116,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             fontWeight: FontWeight.w500,
           ),
         ),
-        trailing: Switch(
-          value: notificationsEnabled,
-          onChanged: _handleNotificationChange,
-          activeColor: Colors.teal,
-        ),
       ),
     );
   }
@@ -179,7 +128,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         selectedLanguage,
         style: const TextStyle(color: Colors.grey),
       ),
-      onTap: _showLanguageDialog,
     );
   }
 
@@ -207,13 +155,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return _buildSettingItem(
       icon: Icons.help_outline,
       title: 'Help & Support',
-      onTap: () {
-        // Navigate to help and support
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const Placeholder()),
-        );
-      },
     );
   }
 
@@ -221,13 +162,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return _buildSettingItem(
       icon: Icons.privacy_tip_outlined,
       title: 'Privacy Policy',
-      onTap: () {
-        // Navigate to privacy policy
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const Placeholder()),
-        );
-      },
     );
   }
 

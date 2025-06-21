@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import '../login_page.dart';
 import '../controllers/auth_controller.dart';
 import '../home_screen.dart';
-import 'package:manuscan/security/homescreen.dart';
+import 'package:manuscan/security/securityscreen.dart';
 
 class Createaccount extends StatefulWidget {
   const Createaccount({super.key});

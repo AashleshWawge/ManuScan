@@ -3,15 +3,20 @@ import 'package:flutter/material.dart';
 import 'package:manuscan/home_screen.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:image_picker/image_picker.dart';
+import '../controllers/pallet_dispatch_controller.dart';
 import 'package:get/get.dart';
-import 'package:manuscan/controllers/pallet_dispatch_controller.dart';
 
 class PalletDispatchScreen2 extends StatefulWidget {
   final String challanId;
   final List<String> scannedPallets;
+  final Map<String, dynamic> challanDetails;
 
-  const PalletDispatchScreen2(
-      {super.key, required this.challanId, required this.scannedPallets});
+  const PalletDispatchScreen2({
+    Key? key,
+    required this.challanId,
+    required this.scannedPallets,
+    required this.challanDetails,
+  }) : super(key: key);
 
   @override
   _PalletDispatchScreen2State createState() => _PalletDispatchScreen2State();
@@ -20,12 +25,12 @@ class PalletDispatchScreen2 extends StatefulWidget {
 class _PalletDispatchScreen2State extends State<PalletDispatchScreen2> {
   final PalletDispatchController controller =
       Get.find<PalletDispatchController>(tag: 'palletDispatch');
+  bool isLoading = false;
+  String error = '';
 
   @override
   void initState() {
     super.initState();
-    print(
-        "PalletDispatchScreen2: Found controller with hashCode: ${controller.hashCode}");
     controller.setChallanId(widget.challanId);
     if (controller.scannedPallets.isEmpty ||
         controller.scannedPallets.length < widget.scannedPallets.length) {
@@ -35,140 +40,266 @@ class _PalletDispatchScreen2State extends State<PalletDispatchScreen2> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      resizeToAvoidBottomInset: false,
-      appBar: AppBar(
-        backgroundColor: Colors.white, // Ensure AppBar background is white
-        elevation: 0,
-        title: const Text("Pallet Dispatch",
-            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-        leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.black),
-            onPressed: () => Navigator.pop(context)),
-      ),
-      body: Container(
-        color: Colors.white,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text("Challan ID : ${widget.challanId}",
-                style:
-                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 10),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                  border: Border.all(color: Colors.black, width: 1),
-                  borderRadius: BorderRadius.circular(10)),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  Text("Vendor 202758",
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                  Text(
-                      "John Deere India Pvt Ltd\nGat no. 166-167 and 271-291 Sanaswadi\nPune-412208"),
-                  Text("GSTIN No. : "),
-                  Text("PAN No. : AAACJ4233B"),
-                  Divider(),
-                  Text("Challan No. : 4348402774"),
-                  Text("Challan Date : 03/01/2025"),
-                  Text("Vehicle No. : "),
-                  Text("Transporter : "),
-                  Text("EMP Code : 1253822"),
-                  Text("Name : Mr. KADAM MAYUR ASHOK"),
-                ],
-              ),
+    return WillPopScope(
+      onWillPop: () async {
+        Navigator.pop(context);
+        return false;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text(
+            "Pallet Dispatch",
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Color.fromRGBO(27, 27, 30, 1),
             ),
-            const SizedBox(height: 15),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                  border: Border.all(color: Colors.black, width: 1),
-                  borderRadius: BorderRadius.circular(10)),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  Text("Material Code: ABCD123456789",
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-                  Text("Material Description: PALLET 5E/5B/5R AXLE"),
-                  Text("HSN Code: 12345678"),
-                  Text("Unit: EA"),
-                  Text("Pallet Qty: 10.00"),
-                  Text("Axle Qty: 2"),
-                  Text("Expected Return Date: 02/07/2025"),
-                ],
-              ),
-            ),
-            const Spacer(),
-            Center(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  ElevatedButton.icon(
-                    onPressed: () async {
-                      String? scannedCode = await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => CustomScannerScreen(
-                                challanId: widget.challanId,
-                                scannedPallets: controller.scannedPallets)),
-                      );
-                      if (scannedCode != null) {
-                        controller.onScanned(scannedCode);
-                        setState(() {}); // Optional refresh
-                      }
-                    },
-                    icon:
-                        const Icon(Icons.qr_code_scanner, color: Colors.white),
-                    label: const Text(
-                      "SCAN PALLET",
-                      style:
-                          TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 25, horizontal: 20),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
+          ),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            color: const Color.fromRGBO(27, 27, 30, 1),
+            onPressed: () => Navigator.pop(context),
+          ),
+          backgroundColor: Colors.white,
+          elevation: 0,
+        ),
+        body: Container(
+          color: Colors.white,
+          child: isLoading
+              ? const Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.teal),
                   ),
-                  const SizedBox(width: 10),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      showManualPalletIdPopup(context);
-                    },
-                    icon: const Icon(Icons.edit, color: Colors.white),
-                    label: const Text(
-                      "MANUAL ENTRY\nOF PALLET ID",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
+                )
+              : error.isNotEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            error,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Colors.red,
+                              fontSize: 16,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: () {
+                              // Add retry logic if needed
+                              setState(() {
+                                error = '';
+                              });
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.teal,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: const Text("Retry"),
+                          ),
+                        ],
                       ),
+                    )
+                  : Column(
+                      children: [
+                        Expanded(
+                          child: SingleChildScrollView(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Card(
+                                  elevation: 2,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          "Challan Details",
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.teal,
+                                          ),
+                                        ),
+                                        const Divider(height: 24),
+                                        _buildDetailRow(
+                                            "Vendor Code",
+                                            widget.challanDetails['vendor']
+                                                ['code']),
+                                        _buildDetailRow(
+                                            "Vendor Name",
+                                            widget.challanDetails['vendor']
+                                                ['name']),
+                                        _buildDetailRow(
+                                            "GSTIN",
+                                            widget.challanDetails['vendor']
+                                                ['gstin']),
+                                        _buildDetailRow(
+                                            "PAN",
+                                            widget.challanDetails['vendor']
+                                                ['pan']),
+                                        const Divider(height: 24),
+                                        _buildDetailRow(
+                                            "Challan No",
+                                            widget
+                                                .challanDetails['challan_no']),
+                                        _buildDetailRow(
+                                            "Date",
+                                            widget.challanDetails[
+                                                'challan_info']['date']),
+                                        _buildDetailRow(
+                                            "Vehicle",
+                                            widget.challanDetails[
+                                                'challan_info']['vehicle_no']),
+                                        _buildDetailRow(
+                                            "Transporter",
+                                            widget.challanDetails[
+                                                'challan_info']['transporter']),
+                                        const Divider(height: 24),
+                                        _buildDetailRow(
+                                            "Employee Code",
+                                            widget.challanDetails['employee']
+                                                ['code']),
+                                        _buildDetailRow(
+                                            "Employee Name",
+                                            widget.challanDetails['employee']
+                                                ['name']),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                Card(
+                                  elevation: 2,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          "Material Details",
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.teal,
+                                          ),
+                                        ),
+                                        const Divider(height: 24),
+                                        _buildDetailRow(
+                                            "Material Code",
+                                            widget.challanDetails['material']
+                                                ['code']),
+                                        _buildDetailRow(
+                                            "Description",
+                                            widget.challanDetails['material']
+                                                ['description']),
+                                        _buildDetailRow(
+                                            "HSN Code",
+                                            widget.challanDetails['material']
+                                                ['hsn_code']),
+                                        _buildDetailRow(
+                                            "Unit",
+                                            widget.challanDetails['material']
+                                                ['unit']),
+                                        _buildDetailRow(
+                                            "Pallet Quantity",
+                                            widget.challanDetails['material']
+                                                ['pallet_count']),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                              ],
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  onPressed: () async {
+                                    String? scannedCode = await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            CustomScannerScreen(
+                                          challanId: widget.challanId,
+                                          scannedPallets:
+                                              controller.scannedPallets,
+                                        ),
+                                      ),
+                                    );
+                                    if (scannedCode != null) {
+                                      controller.onScanned(scannedCode);
+                                    }
+                                  },
+                                  icon: const Icon(Icons.qr_code_scanner,
+                                      color: Colors.white),
+                                  label: const Text(
+                                    "SCAN PALLET",
+                                    style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.black,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 25, horizontal: 20),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  onPressed: () =>
+                                      showManualPalletIdPopup(context),
+                                  icon: const Icon(Icons.edit,
+                                      color: Colors.white),
+                                  label: const Text(
+                                    "MANUAL ENTRY\nOF PALLET ID",
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.teal,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 15, horizontal: 20),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.teal,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 15, horizontal: 20),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 50),
-          ],
         ),
       ),
     );
@@ -244,6 +375,36 @@ class _PalletDispatchScreen2State extends State<PalletDispatchScreen2> {
       },
     );
   }
+
+  Widget _buildDetailRow(String label, dynamic value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 120,
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: Colors.grey,
+                fontSize: 14,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value?.toString() ?? 'N/A',
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class CustomScannerScreen extends StatefulWidget {
@@ -279,7 +440,7 @@ class _CustomScannerScreenState extends State<CustomScannerScreen> {
         backgroundColor: Colors.teal,
         foregroundColor: Colors.white,
         elevation: 0,
-        ),
+      ),
       body: Stack(
         children: [
           MobileScanner(
@@ -353,12 +514,15 @@ class _CustomScannerScreenState extends State<CustomScannerScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 ElevatedButton(
-                    style:
-                        ElevatedButton.styleFrom(backgroundColor: Colors.teal,foregroundColor: Colors.white),
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.teal,
+                        foregroundColor: Colors.white),
                     onPressed: () => Navigator.pop(context),
                     child: const Text('BACK')),
                 ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.teal,foregroundColor: Colors.white),
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.teal,
+                      foregroundColor: Colors.white),
                   onPressed: () => Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -472,7 +636,7 @@ class PalletDispatch3 extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Obx(() => Text("Challan ID : ${controller.challanId.value}",
+              Obx(() => Text("Challan No : ${controller.challanId.value ?? ''}",
                   style: const TextStyle(
                       fontFamily: "DMSans",
                       fontSize: 16,
@@ -579,7 +743,7 @@ class PalletDispatch3 extends StatelessWidget {
                             context,
                             MaterialPageRoute(
                                 builder: (context) => CustomScannerScreen(
-                                    challanId: controller.challanId.value,
+                                    challanId: controller.challanId.value ?? '',
                                     scannedPallets:
                                         controller.scannedPallets)));
                         controller.onScanned(scannedCode);

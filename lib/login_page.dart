@@ -2,8 +2,9 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:manuscan/home_screen.dart';
-import 'unused/forgot_password.dart';
-import 'unused/create_account.dart';
+import 'package:manuscan/security/securityscreen.dart';
+// import 'unused/forgot_password.dart';
+// import 'unused/create_account.dart';
 import 'controllers/auth_controller.dart';
 
 class login_account extends StatefulWidget {
@@ -75,17 +76,19 @@ class _login_account extends State<login_account> {
     );
 
     if (authController.isLoggedIn) {
-      // Assuming you have this getter in AuthController
       Get.snackbar(
         'Success',
         'Login Successful!',
         backgroundColor: Colors.green,
         colorText: Colors.white,
         snackPosition: SnackPosition.TOP,
-        duration: Duration(seconds: 3),
-        margin: EdgeInsets.all(20),
       );
-      // ...existing navigation logic...
+
+      if (authController.currentUser?['role'] == 'security') {
+        Get.offNamed('/security');
+      } else {
+        Get.offNamed('/home');
+      }
     }
   }
 
@@ -100,6 +103,15 @@ class _login_account extends State<login_account> {
                 iconTheme: IconThemeData(
                   color: Color.fromRGBO(88, 164, 176, 1),
                 ),
+                actions: [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Image.asset(
+                      'assets/images/dana.png',
+                      height: 40,
+                    ),
+                  ),
+                ],
               ),
               body: Container(
                 color: Colors.white,
@@ -247,13 +259,13 @@ class _login_account extends State<login_account> {
           Padding(
             padding: const EdgeInsets.only(top: 220.0),
             child: GestureDetector(
-              // onTap: _login,
-              onTap:(){
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => HomeScreen()),
-                ); 
-              }, // Updated to use _login method
+              onTap: _login, // Changed to use _login method
+              // onTap: () {
+              //   Navigator.push(
+              //     context,
+              //     MaterialPageRoute(builder: (context) => SecurityScreen()),
+              //   );
+              // },
               child: Container(
                 width: double.infinity,
                 height: 52,
