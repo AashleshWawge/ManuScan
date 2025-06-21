@@ -23,8 +23,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'ManuScan',
       initialBinding: AppBindings(),
-      // initialRoute: '/', // Commented out to bypass login
-      home: const SecurityScreen(), // Direct navigation to SecurityScreen
+      initialRoute: '/',
       getPages: [
         GetPage(name: '/', page: () => const OnboardingScreen()),
         GetPage(
