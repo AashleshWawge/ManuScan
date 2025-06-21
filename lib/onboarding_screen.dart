@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'create_account.dart';
+// import 'unused/create_account.dart';
 import 'login_page.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -17,33 +17,27 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         color: Colors.white,
         child: Stack(
           children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.only(left: 25.0, top: 50),
-              child: Positioned(
-                top: 50,
-                left: 20,
-                child: Text(
-                  'WELCOME TO',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
+            Positioned(
+              top: 50,
+              left: 20,
+              child: Text(
+                'WELCOME TO',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
                 ),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.only(left: 25.0, top: 75),
-              child: Positioned(
-                top: 70,
-                left: 20,
-                child: Text(
-                  'ManuScan',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontFamily: 'Midnights on the Shore',
-                    color: Colors.black,
-                  ),
+            Positioned(
+              top: 70,
+              left: 20,
+              child: Text(
+                'ManuScan',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontFamily: 'Midnights on the Shore',
+                  color: Colors.black,
                 ),
               ),
             ),
@@ -87,12 +81,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
             Positioned(
-              bottom: 50,
+              bottom: 80, // Changed from 50 to 100 to shift the button upwards
               left: 20,
               right: 20,
               child: Column(
                 children: <Widget>[
                   const SizedBox(height: 200),
+                  // Commented out the 'Create Account' functionality
+                  /*
                   ElevatedButton(
                     onPressed: () {
                       Navigator.push(
@@ -114,6 +110,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       ),
                     ),
                   ),
+                  */
                   const SizedBox(height: 10),
                   ElevatedButton(
                     onPressed: () {
@@ -125,19 +122,29 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     },
                     style: TextButton.styleFrom(
                       minimumSize: const Size(double.infinity, 50),
-                      backgroundColor: Color.fromRGBO(216, 219, 226, 1),
+                      backgroundColor: Color.fromRGBO(55, 63, 81, 1),
                       elevation: 5,
                       shadowColor: Colors.black.withOpacity(0.2),
                     ),
                     child: const Text(
                       'LOG IN',
                       style: TextStyle(
-                        color: Colors.black,
+                        color: Colors.white,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
                 ],
+              ),
+            ),
+            // Add dana.png image at the top right
+            Positioned(
+              top: 40,
+              right: 20,
+              child: Image.asset(
+                'assets/images/dana.png',
+                width: 80, // Adjust size as needed
+                height: 80,
               ),
             ),
           ],
