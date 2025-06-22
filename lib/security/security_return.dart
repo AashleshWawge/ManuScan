@@ -282,7 +282,20 @@ class _SecurityReturnScannerScreenState
                     palletReturnController.addScannedPallet(result);
                     SchedulerBinding.instance.addPostFrameCallback((_) {
                       log('Pallet added.');
-                      Get.back(); // simply go back after adding pallet
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => SecurityPalletReturnScreen(
+                            returnId: widget.returnId,
+                            challanId: widget.challanId,
+                            scannedPallets:
+                                palletReturnController.scannedPallets,
+                            returnStatus: result['returnStatus'] ?? 'Returned',
+                            conditionStatus: result['conditionStatus'] ?? 'OK',
+                            lastScannedResult: result,
+                          ),
+                        ),
+                      );
                       palletReturnController.isNavigating.value = false;
                     });
                   } else {
@@ -304,7 +317,71 @@ class _SecurityReturnScannerScreenState
                   final picker = ImagePicker();
                   final XFile? image =
                       await picker.pickImage(source: ImageSource.gallery);
-                  if (image != null) controller.analyzeImage(image.path);
+                  if (image != null) {
+                    try {
+                      final BarcodeCapture? capture =
+                          await controller.analyzeImage(image.path);
+                      if (capture != null &&
+                          capture.barcodes.isNotEmpty &&
+                          capture.barcodes[0].rawValue != null) {
+                        final code = capture.barcodes[0].rawValue!;
+                        if (!palletReturnController.scannedPallets
+                            .any((p) => p['code'] == code)) {
+                          final Map<String, String>? result =
+                              await _showCombinedStatusDialog(code);
+                          if (result != null) {
+                            palletReturnController.addScannedPallet(result);
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    SecurityPalletReturnScreen(
+                                  returnId: widget.returnId,
+                                  challanId: widget.challanId,
+                                  scannedPallets:
+                                      palletReturnController.scannedPallets,
+                                  returnStatus:
+                                      result['returnStatus'] ?? 'Returned',
+                                  conditionStatus:
+                                      result['conditionStatus'] ?? 'OK',
+                                  lastScannedResult: result,
+                                ),
+                              ),
+                            );
+                          }
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content:
+                                  Text('This pallet has already been scanned'),
+                              backgroundColor: Colors.red,
+                              duration: Duration(seconds: 3),
+                            ),
+                          );
+                        }
+                      } else {
+                        // Show error if no QR code found in image
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content:
+                                Text('No QR code found in the selected image'),
+                            backgroundColor: Colors.red,
+                            duration: Duration(seconds: 3),
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      // Show error if image analysis fails
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content:
+                              Text('Error analyzing image: ${e.toString()}'),
+                          backgroundColor: Colors.red,
+                          duration: const Duration(seconds: 3),
+                        ),
+                      );
+                    }
+                  }
                 }),
                 _buildIconButton(
                     Icons.flash_on, Colors.white, controller.toggleTorch),
@@ -347,18 +424,37 @@ class _SecurityReturnScannerScreenState
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildActionButton('Back', Colors.teal, () => Get.back()),
+                _buildActionButton('Back', Colors.teal, () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => SecurityPalletReturnScreen(
+                        returnId: widget.returnId,
+                        challanId: widget.challanId,
+                        scannedPallets: palletReturnController.scannedPallets,
+                        returnStatus: 'Returned',
+                        conditionStatus: 'OK',
+                        lastScannedResult: null,
+                      ),
+                    ),
+                  );
+                }),
                 _buildActionButton(
                   'View Pallets',
                   Colors.teal,
-                  () => Get.to(() => SecurityPalletReturnScreen(
+                  () => Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => SecurityPalletReturnScreen(
                         returnId: widget.returnId,
                         challanId: widget.challanId,
+                        scannedPallets: palletReturnController.scannedPallets,
+                        returnStatus: 'Returned',
+                        conditionStatus: 'OK',
                         lastScannedResult: null,
-                        returnStatus: '',
-                        scannedPallets: [], // No new scan when viewing
-                        conditionStatus: '', // No new scan when viewing
-                      )),
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -399,9 +495,41 @@ class _SecurityReturnScannerScreenState
     );
   }
 
+  // Function to parse QR string and extract MODEL PALLET and PALLET SR
+  Map<String, String> parseQRString(String qrString) {
+    String modelPallet = '';
+    String palletSr = '';
+
+    // Split the string by lines
+    List<String> lines = qrString.split('\n');
+
+    for (String line in lines) {
+      line = line.trim();
+
+      // Extract MODEL PALLET
+      if (line.startsWith('MODEL PALLET -')) {
+        modelPallet = line.replaceFirst('MODEL PALLET -', '').trim();
+      }
+
+      // Extract PALLET SR NO
+      if (line.startsWith('PALLET SR NO.-')) {
+        palletSr = line.replaceFirst('PALLET SR NO.-', '').trim();
+      }
+    }
+
+    return {
+      'modelPallet': modelPallet,
+      'palletSr': palletSr,
+      'originalCode': qrString,
+    };
+  }
+
   Future<Map<String, String>?> _showCombinedStatusDialog(String code) async {
     String selectedReturnStatus = 'Returned';
     String selectedConditionStatus = 'OK';
+
+    // Parse the QR string to extract fields
+    Map<String, String> parsedData = parseQRString(code);
 
     return await Get.dialog<Map<String, String>>(
       StatefulBuilder(
@@ -413,8 +541,16 @@ class _SecurityReturnScannerScreenState
                 style: TextStyle(color: Colors.teal)),
             content: Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(code, style: const TextStyle(fontSize: 16)),
+                Text('MODEL PALLET: ${parsedData['modelPallet']}'),
+                const SizedBox(height: 8),
+                Text('PALLET SR: ${parsedData['palletSr']}'),
+                const SizedBox(height: 12),
+                const Text('Original QR Code:',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+                Text(parsedData['originalCode']!,
+                    style: const TextStyle(fontSize: 12, color: Colors.grey)),
                 const SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -464,7 +600,10 @@ class _SecurityReturnScannerScreenState
               ),
               TextButton(
                 onPressed: () => Get.back(result: {
-                  'code': code,
+                  'code': parsedData['modelPallet']!.isNotEmpty &&
+                          parsedData['palletSr']!.isNotEmpty
+                      ? '${parsedData['modelPallet']} - ${parsedData['palletSr']}'
+                      : code, // Use original if parsing failed
                   'returnStatus': selectedReturnStatus,
                   'conditionStatus': selectedConditionStatus,
                 }),
@@ -576,50 +715,66 @@ class __SecurityPalletReturnScreenState
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Pallet Return'),
-        backgroundColor: Colors.white,
-        elevation: 0,
-      ),
-      body: Container(
-        color: Colors.white, // Set background color to white
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Card(
-                  elevation: 2,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                  child: Column(
-                    children: [
-                      if (widget.lastScannedResult != null) ...[
-                        Padding(
-                          padding: const EdgeInsets.all(12.0),
-                          child: Text(
-                              'Last Scanned: ${widget.lastScannedResult!['code']} '
-                              'Status: ${widget.lastScannedResult!['returnStatus']} '
-                              'Condition: ${widget.lastScannedResult!['conditionStatus']}',
-                              style: const TextStyle(
-                                  fontSize: 16, color: Colors.grey)),
-                        ),
-                        const Divider(height: 1, color: Colors.grey),
-                      ],
-                      Expanded(
-                        child: Obx(() {
-                          // Access reactive variables inside Obx
-                          final scannedPallets =
-                              palletReturnController.scannedPallets;
-                          return scannedPallets.isEmpty
+    return WillPopScope(
+      onWillPop: () async {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => SecurityAddPalletsSection(
+              challanId: widget.challanId,
+              returnId: widget.returnId,
+              scannedPallets: palletReturnController.scannedPallets,
+            ),
+          ),
+        );
+        return false;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Pallet Return'),
+          backgroundColor: Colors.white,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.black),
+            onPressed: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => SecurityAddPalletsSection(
+                    challanId: widget.challanId,
+                    returnId: widget.returnId,
+                    scannedPallets: palletReturnController.scannedPallets,
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        body: Container(
+          color: Colors.white, // Set background color to white
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Card(
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                    child: Column(
+                      children: [
+                        Expanded(
+                          child: Obx(() => palletReturnController
+                                  .scannedPallets.isEmpty
                               ? const Center(
                                   child: Text('No pallets scanned yet'))
                               : ListView.builder(
-                                  itemCount: scannedPallets.length,
+                                  itemCount: palletReturnController
+                                      .scannedPallets.length,
                                   itemBuilder: (context, index) {
-                                    final pallet = scannedPallets[index];
+                                    final pallet = palletReturnController
+                                        .scannedPallets[index];
                                     final code = pallet['code'] ?? 'Unknown';
                                     final returnStatus =
                                         pallet['returnStatus'] ??
@@ -629,170 +784,231 @@ class __SecurityPalletReturnScreenState
                                     final isReturned =
                                         returnStatus == 'Returned';
 
-                                    return ListTile(
-                                      contentPadding:
-                                          const EdgeInsets.symmetric(
-                                              horizontal: 16, vertical: 8),
-                                      title: Text('Pallet ID: $code',
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.w500)),
-                                      subtitle: Row(
+                                    // Parse the code to extract MODEL PALLET and PALLET SR
+                                    String modelPallet = '';
+                                    String palletSr = '';
+                                    if (code.contains(' - ')) {
+                                      final parts = code.split(' - ');
+                                      modelPallet = parts[0];
+                                      palletSr =
+                                          parts.length > 1 ? parts[1] : 'N/A';
+                                    } else {
+                                      modelPallet = code;
+                                      palletSr = 'N/A';
+                                    }
+
+                                    return Container(
+                                      margin: const EdgeInsets.symmetric(
+                                          vertical: 5),
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 10),
+                                      decoration: BoxDecoration(
+                                        border: Border(
+                                          bottom: BorderSide(
+                                              color: Colors.grey.shade300),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
                                         children: [
-                                          _buildStatusChip(
-                                            isReturned
-                                                ? 'Returned'
-                                                : 'Not Returned',
-                                            isReturned
-                                                ? Colors.blue
-                                                : Colors.red,
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                const Text(
+                                                  "MODEL PALLET:",
+                                                  style: TextStyle(
+                                                    fontFamily: "DMSans",
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.w400,
+                                                    color: Colors.black54,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  modelPallet,
+                                                  style: const TextStyle(
+                                                    fontFamily: "DMSans",
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 4),
+                                                const Text(
+                                                  "PALLET SR:",
+                                                  style: TextStyle(
+                                                    fontFamily: "DMSans",
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.w400,
+                                                    color: Colors.black54,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  palletSr,
+                                                  style: const TextStyle(
+                                                    fontFamily: "DMSans",
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 8),
+                                                Row(
+                                                  children: [
+                                                    _buildStatusChip(
+                                                      isReturned
+                                                          ? 'Returned'
+                                                          : 'Not Returned',
+                                                      isReturned
+                                                          ? Colors.blue
+                                                          : Colors.red,
+                                                    ),
+                                                    const SizedBox(width: 8),
+                                                    _buildStatusChip(
+                                                      conditionStatus,
+                                                      conditionStatus == 'Scrap'
+                                                          ? Colors.red
+                                                          : conditionStatus ==
+                                                                  'Repair'
+                                                              ? Colors.orange
+                                                              : Colors.green,
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
                                           ),
-                                          const SizedBox(width: 8),
-                                          _buildStatusChip(
-                                            conditionStatus,
-                                            conditionStatus == 'Scrap'
-                                                ? Colors.red
-                                                : conditionStatus == 'Repair'
-                                                    ? Colors.orange
-                                                    : Colors.green,
+                                          Row(
+                                            children: [
+                                              GestureDetector(
+                                                onTap: () =>
+                                                    showDeletePalletPopup(
+                                                  context,
+                                                  () => palletReturnController
+                                                      .removePallet(index),
+                                                ),
+                                                child: const Icon(Icons.delete,
+                                                    color: Colors.black54),
+                                              ),
+                                            ],
                                           ),
                                         ],
                                       ),
-                                      trailing: IconButton(
-                                        icon: const Icon(Icons.delete,
-                                            color: Colors.grey),
-                                        onPressed: () => showDeletePalletPopup(
-                                          context,
-                                          () => palletReturnController
-                                              .removePallet(index),
-                                        ),
-                                      ),
                                     );
                                   },
-                                );
-                        }),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: Obx(() {
-                          // Access reactive variables inside Obx
-                          final totalPallets =
-                              palletReturnController.totalPallets.value;
-                          final returnedCount =
-                              palletReturnController.returnedCount;
-                          final notReturnedCount =
-                              palletReturnController.notReturnedCount;
-
-                          return Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Total Expected: $totalPallets',
-                                style: const TextStyle(fontSize: 14),
-                              ),
-                              Text(
-                                'Returned: $returnedCount',
-                                style: const TextStyle(
-                                    fontSize: 14, color: Colors.blue),
-                              ),
-                              Text(
-                                'Not Returned: $notReturnedCount',
-                                style: const TextStyle(
-                                    fontSize: 14, color: Colors.red),
-                              ),
-                            ],
-                          );
-                        }),
-                      ),
-                    ],
+                                )),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: Obx(() => Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Total Expected: ${palletReturnController.totalPallets}',
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
+                                  Text(
+                                    'Returned: ${palletReturnController.returnedCount}',
+                                    style: const TextStyle(
+                                        fontSize: 14, color: Colors.blue),
+                                  ),
+                                  Text(
+                                    'Not Returned: ${palletReturnController.notReturnedCount}',
+                                    style: const TextStyle(
+                                        fontSize: 14, color: Colors.red),
+                                  ),
+                                ],
+                              )),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  Expanded(
-                    child: Obx(() {
-                      // Access reactive variables inside Obx
-                      final scannedPallets =
-                          palletReturnController.scannedPallets.length;
-                      final totalPallets =
-                          palletReturnController.totalPallets.value;
-
-                      return ElevatedButton.icon(
-                        onPressed: scannedPallets >= totalPallets
-                            ? null
-                            : () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        SecurityAddPalletsSection(
-                                      challanId: widget.challanId,
-                                      returnId: widget.returnId,
-                                      scannedPallets: widget.scannedPallets,
+                const SizedBox(height: 15),
+                Obx(() => Center(
+                    child: Text(
+                        "Total : ${palletReturnController.scannedPallets.length}",
+                        style: const TextStyle(
+                            fontFamily: "DMSans",
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold)))),
+                const SizedBox(height: 10),
+                // Replace the existing buttons section with this new Row
+                Row(
+                  children: [
+                    Expanded(
+                      child: Obx(() {
+                        bool isDisabled =
+                            palletReturnController.scannedPallets.length >=
+                                palletReturnController.totalPallets.value;
+                        return ElevatedButton.icon(
+                          onPressed: isDisabled
+                              ? null
+                              : () {
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          SecurityAddPalletsSection(
+                                        challanId: widget.challanId,
+                                        returnId: widget.returnId,
+                                        scannedPallets: widget.scannedPallets,
+                                      ),
                                     ),
-                                  ),
-                                ).then((result) {
-                                  if (result != null &&
-                                      result is Map<String, String>) {
-                                    setState(() {
-                                      palletReturnController
-                                          .addScannedPallet(result);
-                                    });
-                                  }
-                                });
-                              },
-                        icon: const Icon(Icons.add_circle, color: Colors.white),
-                        label: Text(
-                          scannedPallets >= totalPallets
-                              ? "MAX PALLETS REACHED"
-                              : "ADD PALLET",
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
+                                  );
+                                },
+                          icon: Icon(Icons.add_circle,
+                              color: isDisabled ? Colors.grey : Colors.white),
+                          label: Text(
+                            "ADD PALLET",
+                            style: TextStyle(
+                                color: isDisabled ? Colors.grey : Colors.white,
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold),
                           ),
-                        ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                isDisabled ? Colors.grey.shade300 : Colors.teal,
+                            padding: const EdgeInsets.symmetric(vertical: 15),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          showPalletsNotReturnedPopup(
+                              context, palletReturnController.returnedCount);
+                        },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.teal,
-                          disabledBackgroundColor: Colors.grey,
+                          backgroundColor:
+                              const Color.fromRGBO(216, 219, 226, 1),
                           padding: const EdgeInsets.symmetric(vertical: 15),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
                         ),
-                      );
-                    }),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        showPalletsNotReturnedPopup(
-                            context, palletReturnController.returnedCount);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromRGBO(216, 219, 226, 1),
-                        padding: const EdgeInsets.symmetric(vertical: 15),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: const Text(
-                        "CONFIRM",
-                        style: TextStyle(
-                          fontFamily: "DMSans",
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: Color.fromRGBO(27, 27, 30, 1),
+                        child: const Text(
+                          "CONFIRM",
+                          style: TextStyle(
+                            fontFamily: "DMSans",
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Color.fromRGBO(27, 27, 30, 1),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-            ],
+                  ],
+                ),
+                const SizedBox(height: 20),
+              ],
+            ),
           ),
         ),
       ),
@@ -1021,9 +1237,11 @@ class SecurityAddPalletsSection extends StatefulWidget {
 
 class _SecurityAddPalletsSectionState extends State<SecurityAddPalletsSection> {
   late final PalletReturnController palletReturnController;
-  final TextEditingController palletIdController = TextEditingController();
+  final TextEditingController modelPalletController = TextEditingController();
+  final TextEditingController palletSrController = TextEditingController();
   String selectedReturnStatus = 'Returned';
   String selectedConditionStatus = 'OK';
+  final ImagePicker _imagePicker = ImagePicker();
 
   @override
   void initState() {
@@ -1034,187 +1252,207 @@ class _SecurityAddPalletsSectionState extends State<SecurityAddPalletsSection> {
 
   @override
   Widget build(BuildContext context) {
-    // Add check at the start of build
-    if (palletReturnController.scannedPallets.length >=
-        palletReturnController.totalPallets.value) {
-      // Return to previous screen if max pallets reached
-      SchedulerBinding.instance.addPostFrameCallback((_) {
+    return WillPopScope(
+      onWillPop: () async {
+        // Navigate back to the previous screen instead of home
         Navigator.pop(context);
-        Get.snackbar(
-          'Maximum Pallets Reached',
-          'Cannot add more pallets than specified limit',
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.TOP,
-        );
-      });
-    }
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Add Pallets'), // Updated title
-        backgroundColor: Colors.white,
-        elevation: 0,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SizedBox(height: 20),
-            TextField(
-              controller: palletIdController,
-              decoration: InputDecoration(
-                labelText: 'Enter Pallet ID',
-                filled: true,
-                fillColor: Colors.grey[200],
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8),
-              child: Center(
-                child: Text(
-                  "OR",
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
+        return false; // Prevent default back behavior
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Add Pallets'), // Updated title
+          backgroundColor: Colors.white,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.black),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: 20),
+              // MODEL PALLET field - characters only
+              TextField(
+                controller: modelPalletController,
+                decoration: InputDecoration(
+                  labelText: 'MODEL PALLET',
+                  filled: true,
+                  fillColor: Colors.grey[200],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
                   ),
                 ),
               ),
-            ),
-            // Add a Scan Pallet button above the text field:
-            ElevatedButton.icon(
-              onPressed: () async {
-                String? scannedCode = await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => SecurityReturnScannerScreen(
-                      challanId: widget.challanId,
-                      returnId: widget.returnId,
-                      scannedPallets: widget.scannedPallets,
+              const SizedBox(height: 12),
+              // PALLET SR field - numbers only
+              TextField(
+                controller: palletSrController,
+                decoration: InputDecoration(
+                  labelText: 'PALLET SR',
+                  filled: true,
+                  fillColor: Colors.grey[200],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: Center(
+                  child: Text(
+                    "OR",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
                     ),
                   ),
-                );
-                if (scannedCode != null) {
-                  setState(() {
-                    palletIdController.text = scannedCode;
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        String? scannedCode = await Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => SecurityReturnScannerScreen(
+                              challanId: widget.challanId,
+                              returnId: widget.returnId,
+                              scannedPallets: widget.scannedPallets,
+                            ),
+                          ),
+                        );
+                        if (scannedCode != null) {
+                          // Handle the scanned code if needed
+                          // The scanner will handle adding to controller
+                        }
+                      },
+                      icon: const Icon(Icons.qr_code_scanner,
+                          color: Colors.white),
+                      label: const Text(
+                        "SCAN PALLET",
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.black87,
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              // Existing options for return and condition
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      DropdownButtonFormField<String>(
+                        value: selectedReturnStatus,
+                        decoration:
+                            const InputDecoration(labelText: 'Return Status'),
+                        items: ['Returned', 'Not Returned']
+                            .map((item) => DropdownMenuItem(
+                                value: item, child: Text(item)))
+                            .toList(),
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() => selectedReturnStatus = value);
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      DropdownButtonFormField<String>(
+                        value: selectedConditionStatus,
+                        decoration: const InputDecoration(
+                            labelText: 'Condition Status'),
+                        items: ['OK', 'Repair', 'Scrap']
+                            .map((item) => DropdownMenuItem(
+                                value: item, child: Text(item)))
+                            .toList(),
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() => selectedConditionStatus = value);
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () {
+                  if (modelPalletController.text.trim().isEmpty ||
+                      palletSrController.text.trim().isEmpty) {
+                    Flushbar(
+                      message: 'Please enter both MODEL PALLET and PALLET SR',
+                      backgroundColor: Colors.red,
+                      margin: const EdgeInsets.all(10),
+                      borderRadius: BorderRadius.circular(8),
+                      duration: const Duration(seconds: 3),
+                      flushbarPosition: FlushbarPosition.TOP,
+                    ).show(context);
+                    return;
+                  }
+
+                  String combinedCode =
+                      '${modelPalletController.text.trim()} - ${palletSrController.text.trim()}';
+
+                  // Add pallet to controller
+                  palletReturnController.addScannedPallet({
+                    'code': combinedCode,
+                    'returnStatus': selectedReturnStatus,
+                    'conditionStatus': selectedConditionStatus,
                   });
-                }
-              },
-              icon: const Icon(Icons.qr_code_scanner, color: Colors.white),
-              label: const Text(
-                "SCAN PALLET",
-                style: TextStyle(color: Colors.white),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.teal,
-                padding:
-                    const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
-              ),
-            ),
-            const SizedBox(height: 20),
-            // Existing options for return and condition
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    DropdownButtonFormField<String>(
-                      value: selectedReturnStatus,
-                      decoration:
-                          const InputDecoration(labelText: 'Return Status'),
-                      items: ['Returned', 'Not Returned']
-                          .map((item) =>
-                              DropdownMenuItem(value: item, child: Text(item)))
-                          .toList(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          setState(() => selectedReturnStatus = value);
-                        }
-                      },
+
+                  // Navigate to PalletReturnScreen
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => SecurityPalletReturnScreen(
+                        returnId: widget.returnId,
+                        challanId: widget.challanId,
+                        scannedPallets: palletReturnController.scannedPallets,
+                        returnStatus: selectedReturnStatus,
+                        conditionStatus: selectedConditionStatus,
+                        lastScannedResult: null,
+                      ),
                     ),
-                    const SizedBox(height: 16),
-                    DropdownButtonFormField<String>(
-                      value: selectedConditionStatus,
-                      decoration:
-                          const InputDecoration(labelText: 'Condition Status'),
-                      items: ['OK', 'Repair', 'Scrap']
-                          .map((item) =>
-                              DropdownMenuItem(value: item, child: Text(item)))
-                          .toList(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          setState(() => selectedConditionStatus = value);
-                        }
-                      },
-                    ),
-                  ],
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.teal,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
+                ),
+                child: const Text(
+                  "CONFIRM ENTRY",
+                  style: TextStyle(color: Colors.white),
                 ),
               ),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: () {
-                if (palletIdController.text.trim().isEmpty) {
-                  Flushbar(
-                    message: 'Please enter a Pallet ID',
-                    backgroundColor: Colors.red,
-                    duration: const Duration(seconds: 3),
-                    flushbarPosition: FlushbarPosition.TOP,
-                  ).show(context);
-                  return;
-                }
-
-                // Add pallet directly to controller
-                palletReturnController.addScannedPallet({
-                  'code': palletIdController.text.trim(),
-                  'returnStatus': selectedReturnStatus,
-                  'conditionStatus': selectedConditionStatus,
-                });
-
-                // Navigate to PalletReturnScreen
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => SecurityPalletReturnScreen(
-                      returnId: widget.returnId,
-                      challanId: widget.challanId,
-                      scannedPallets: palletReturnController.scannedPallets,
-                      returnStatus: selectedReturnStatus,
-                      conditionStatus: selectedConditionStatus,
-                      lastScannedResult: null,
-                    ),
-                  ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.teal,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
-              ),
-              child: const Text(
-                "CONFIRM ENTRY",
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    palletIdController.dispose();
-    super.dispose();
   }
 }
 

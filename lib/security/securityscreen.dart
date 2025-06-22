@@ -89,9 +89,7 @@ class SecurityScreenContent extends StatelessWidget {
             description:
                 "Handle the return of pallets efficiently by recording inbound shipments, verifying conditions, and updating stock levels.",
             onTap: () {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                showSecurityChallanIdPopup(context);
-              });
+              showSecurityChallanIdPopup(context);
             },
           ),
         ],
@@ -112,9 +110,9 @@ class SecurityScreenContent extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  "Welcome, $userName",
-                  style: const TextStyle(
+                const Text(
+                  "Welcome, Security Guard",
+                  style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     fontStyle: FontStyle.italic,

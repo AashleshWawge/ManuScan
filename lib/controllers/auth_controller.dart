@@ -37,11 +37,26 @@ class AuthController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    // Remove automatic login bypass - start with no user logged in
+    _firstName.value = '';
+    _lastName.value = '';
+    _email.value = '';
+    _role.value = '';
+    _isLoggedIn.value = false;
+    _currentUser.value = null;
+    print('AuthController initialized - no user logged in');
     checkAuth();
   }
 
   void checkAuth() {
     // Add your auth check logic here
+    print('checkAuth called - user role: ${_role.value}');
+    print(
+        'checkAuth called - currentUser role: ${_currentUser.value?['role']}');
+    print('checkAuth called - isLoggedIn: ${_isLoggedIn.value}');
+    print('checkAuth called - firstName: ${_firstName.value}');
+    // Ensure no navigation happens here
+    print('checkAuth completed - no navigation triggered');
   }
 
   Future<void> createAccount({
@@ -76,7 +91,16 @@ class AuthController extends GetxController {
           'role': role,
         };
         _isLoggedIn.value = true;
-        Get.offAll(() => HomeScreen());
+        // Implement role-based navigation for account creation
+        final userRole = role;
+        if (userRole == 'Security guard') {
+          Get.offNamed('/security');
+          print(
+              'Account created - navigating to SecurityScreen for Security guard role');
+        } else {
+          Get.offNamed('/home');
+          print('Account created - navigating to HomeScreen for other roles');
+        }
       } else {
         _errorMessage.value = 'Failed to create account';
       }
@@ -121,7 +145,16 @@ class AuthController extends GetxController {
         }
 
         _isLoggedIn.value = true;
-        Get.offAll(() => HomeScreen());
+        // Implement role-based navigation
+        final userRole = responseData['user']?['role'] ?? 'user';
+        if (userRole == 'Security guard') {
+          Get.offNamed('/security');
+          print(
+              'Login successful - navigating to SecurityScreen for Security guard role');
+        } else {
+          Get.offNamed('/home');
+          print('Login successful - navigating to HomeScreen for other roles');
+        }
       } else {
         final responseData = jsonDecode(response.body);
         _errorMessage.value = responseData['error'] ?? 'Failed to login';
@@ -138,7 +171,9 @@ class AuthController extends GetxController {
     _isLoggedIn.value = false;
     _currentUser.value = null;
     _token.value = ''; // Clear the token on logout
+    // Restore navigation functionality
     Get.offAll(() => OnboardingScreen());
+    print('Logout - navigating to OnboardingScreen');
   }
 
   // Update setUserData method
