@@ -7,6 +7,7 @@ import 'package:manuscan/controllers/auth_controller.dart'; // Change this impor
 import 'palletdispatch/pallet_dispatch.dart';
 import 'package:get/get.dart';
 import 'palletreturn/qr_return.dart'; // Ensure this import exposes showChallanIdPopup
+import 'palletdispatch/qr_dispatch.dart'; // Added import for PalletDispatchScreen2
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -25,6 +26,10 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    print('HomeScreen initState called');
+    print('AuthController firstName: ${authController.firstName}');
+    print('AuthController role: ${authController.role}');
+    print('AuthController isLoggedIn: ${authController.isLoggedIn}');
     _screens = [
       HomeScreenContent(authController: authController),
       const NotificationsScreen(),
@@ -35,11 +40,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    print('HomeScreen build method called');
+    print('Current index: $_currentIndex');
+    print('AuthController isLoading: ${authController.isLoading}');
+    print('AuthController isLoggedIn: ${authController.isLoggedIn}');
+
     return Scaffold(
       backgroundColor: Colors.white,
       bottomNavigationBar: CustomBottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) {
+          print('Bottom nav tapped: $index');
           setState(() {
             _currentIndex = index;
           });
@@ -47,12 +58,16 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: SafeArea(
         child: Obx(() {
+          print('HomeScreen Obx rebuild triggered');
           if (authController.isLoading) {
+            print('Showing loading indicator');
             return const Center(child: CircularProgressIndicator());
           }
           if (_currentIndex == 0) {
+            print('Showing HomeScreenContent');
             return HomeScreenContent(authController: authController);
           }
+          print('Showing screen at index: $_currentIndex');
           return _screens[_currentIndex];
         }),
       ),
@@ -68,6 +83,10 @@ class HomeScreenContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print('HomeScreenContent build method called');
+    print('AuthController firstName: ${authController.firstName}');
+    print('AuthController role: ${authController.role}');
+
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -87,10 +106,44 @@ class HomeScreenContent extends StatelessWidget {
             description:
                 "Manage the outbound movement of pallets by tracking dispatch details and ensuring accurate inventory updates.",
             onTap: () {
+              print(
+                  'Pallet Dispatch tapped - navigating directly to QR dispatch');
+              // Navigate directly to PalletDispatchScreen2 (qr_dispatch.dart) with default values
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (context) => PalletDispatchScreen1()),
+                  builder: (context) => PalletDispatchScreen2(
+                    challanId: 'DEFAULT_CHALLAN',
+                    scannedPallets: [],
+                    challanDetails: {
+                      'vendor': {
+                        'code': 'VENDOR001',
+                        'name': 'Default Vendor',
+                        'gstin': 'GSTIN123456789',
+                        'pan': 'PAN123456789',
+                      },
+                      'challan_no': 'DEFAULT_CHALLAN',
+                      'challan_info': {
+                        'date': '2024-01-01',
+                        'vehicle_no': 'DL01AB1234',
+                        'transporter': 'Default Transporter',
+                      },
+                      'employee': {
+                        'code': 'EMP001',
+                        'name': 'Default Employee',
+                      },
+                      'material': {
+                        'code': 'MAT001',
+                        'description': 'Default Material',
+                        'hsn_code': 'HSN001',
+                        'pallet_count': '10',
+                        'unit': 'PCS',
+                        'axle_qty': '5',
+                        'expected_return_date': '2024-02-01',
+                      },
+                    },
+                  ),
+                ),
               );
             },
           ),
@@ -101,6 +154,7 @@ class HomeScreenContent extends StatelessWidget {
             description:
                 "Handle the return of pallets efficiently by recording inbound shipments, verifying conditions, and updating stock levels.",
             onTap: () {
+              print('Pallet Return tapped');
               // Call showChallanIdPopup to start the return process.
               showChallanIdPopup(context);
             },
@@ -111,6 +165,7 @@ class HomeScreenContent extends StatelessWidget {
   }
 
   Widget _buildHeader({required String userName}) {
+    print('_buildHeader called with userName: $userName');
     return Container(
       padding: const EdgeInsets.all(16),
       child: Stack(

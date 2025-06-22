@@ -83,12 +83,6 @@ class _login_account extends State<login_account> {
         colorText: Colors.white,
         snackPosition: SnackPosition.TOP,
       );
-
-      if (authController.currentUser?['role'] == 'security') {
-        Get.offNamed('/security');
-      } else {
-        Get.offNamed('/home');
-      }
     }
   }
 

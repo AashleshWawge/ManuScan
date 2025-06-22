@@ -235,7 +235,8 @@ class _PalletDispatchScreen2State extends State<PalletDispatchScreen2> {
                               Expanded(
                                 child: ElevatedButton.icon(
                                   onPressed: () async {
-                                    String? scannedCode = await Navigator.push(
+                                    String? scannedCode =
+                                        await Navigator.pushReplacement(
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) =>
@@ -277,7 +278,7 @@ class _PalletDispatchScreen2State extends State<PalletDispatchScreen2> {
                                   icon: const Icon(Icons.edit,
                                       color: Colors.white),
                                   label: const Text(
-                                    "MANUAL ENTRY\nOF PALLET ID",
+                                    "MANUAL ENTRY\nOF PALLETS",
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
                                       fontSize: 14,
@@ -306,7 +307,8 @@ class _PalletDispatchScreen2State extends State<PalletDispatchScreen2> {
   }
 
   void showManualPalletIdPopup(BuildContext context) {
-    TextEditingController palletIdController = TextEditingController();
+    TextEditingController modelPalletController = TextEditingController();
+    TextEditingController palletSrController = TextEditingController();
 
     showDialog(
       context: context,
@@ -319,13 +321,15 @@ class _PalletDispatchScreen2State extends State<PalletDispatchScreen2> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text("Enter Pallet ID",
+                const Text("Enter Pallet Details",
                     style:
                         TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 15),
+                const SizedBox(height: 20),
+                // MODEL PALLET field - characters only
                 TextField(
-                  controller: palletIdController,
+                  controller: modelPalletController,
                   decoration: InputDecoration(
+                      labelText: 'MODEL PALLET',
                       filled: true,
                       fillColor: Colors.grey[300],
                       border: OutlineInputBorder(
@@ -336,11 +340,27 @@ class _PalletDispatchScreen2State extends State<PalletDispatchScreen2> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 15),
+                // PALLET SR field - numbers only
+                TextField(
+                  controller: palletSrController,
+                  decoration: InputDecoration(
+                      labelText: 'PALLET SR',
+                      filled: true,
+                      fillColor: Colors.grey[300],
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                          borderSide: BorderSide.none),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 12)),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: () {
-                    if (palletIdController.text.trim().isEmpty) {
+                    if (modelPalletController.text.trim().isEmpty ||
+                        palletSrController.text.trim().isEmpty) {
                       Flushbar(
-                        message: 'Please enter a Pallet ID',
+                        message: 'Please enter both MODEL PALLET and PALLET SR',
                         backgroundColor: Colors.red,
                         margin: const EdgeInsets.all(10),
                         borderRadius: BorderRadius.circular(8),
@@ -349,10 +369,13 @@ class _PalletDispatchScreen2State extends State<PalletDispatchScreen2> {
                       ).show(context);
                       return;
                     }
-                    print("Manual entry: ${palletIdController.text.trim()}");
-                    controller.addPallet(palletIdController.text.trim());
+
+                    String combinedCode =
+                        '${modelPalletController.text.trim()} - ${palletSrController.text.trim()}';
+                    print("Manual entry: $combinedCode");
+                    controller.addPallet(combinedCode);
                     Navigator.pop(context);
-                    Navigator.push(
+                    Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
                             builder: (context) => PalletDispatchScreen(
@@ -426,134 +449,351 @@ class _CustomScannerScreenState extends State<CustomScannerScreen> {
   void initState() {
     super.initState();
     controller.setChallanId(widget.challanId);
-    if (controller.scannedPallets.isEmpty ||
-        controller.scannedPallets.length < widget.scannedPallets.length) {
-      controller.scannedPallets.assignAll(widget.scannedPallets);
-    }
+    // Use Future.microtask to avoid triggering rebuilds during build
+    Future.microtask(() {
+      if (controller.scannedPallets.isEmpty ||
+          controller.scannedPallets.length < widget.scannedPallets.length) {
+        controller.scannedPallets.assignAll(widget.scannedPallets);
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Scan Pallet QR'),
-        backgroundColor: Colors.teal,
-        foregroundColor: Colors.white,
-        elevation: 0,
-      ),
-      body: Stack(
-        children: [
-          MobileScanner(
-            controller: controller.scannerController,
-            onDetect: (capture) {
-              final List<Barcode> barcodes = capture.barcodes;
-              if (barcodes.isNotEmpty && barcodes[0].rawValue != null) {
-                final code = barcodes[0].rawValue!;
-                controller.scannerController.stop();
-                if (!controller.scannedPallets.contains(code)) {
-                  _showScannedCodeDialog(context, code);
-                } else {
-                  _showDuplicateCodeDialog(context);
-                }
-              }
-            },
-          ),
-          Positioned(
-            top: 30,
-            left: 10,
-            right: 10,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.image, color: Colors.white),
-                  onPressed: () async {
-                    final ImagePicker picker = ImagePicker();
-                    final XFile? image =
-                        await picker.pickImage(source: ImageSource.gallery);
-                    if (image != null)
-                      controller.scannerController.analyzeImage(image.path);
-                  },
-                ),
-                IconButton(
-                    icon: const Icon(Icons.flash_on, color: Colors.white),
-                    onPressed: () =>
-                        controller.scannerController.toggleTorch()),
-                IconButton(
-                    icon: const Icon(Icons.flip_camera_android,
-                        color: Colors.white),
-                    onPressed: () =>
-                        controller.scannerController.switchCamera()),
-              ],
+    return WillPopScope(
+      onWillPop: () async {
+        // Always navigate back to PalletDispatchScreen2 instead of stacking
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PalletDispatchScreen2(
+              challanId: widget.challanId,
+              scannedPallets: controller.scannedPallets,
+              challanDetails: {
+                'vendor': {
+                  'code': 'VENDOR001',
+                  'name': 'Default Vendor',
+                  'gstin': 'GSTIN123456789',
+                  'pan': 'PAN123456789',
+                },
+                'challan_no': widget.challanId,
+                'challan_info': {
+                  'date': '2024-01-01',
+                  'vehicle_no': 'DL01AB1234',
+                  'transporter': 'Default Transporter',
+                },
+                'employee': {
+                  'code': 'EMP001',
+                  'name': 'Default Employee',
+                },
+                'material': {
+                  'code': 'MAT001',
+                  'description': 'Default Material',
+                  'hsn_code': 'HSN001',
+                  'pallet_count': '10',
+                  'unit': 'PCS',
+                  'axle_qty': '5',
+                  'expected_return_date': '2024-02-01',
+                },
+              },
             ),
           ),
-          Center(
-              child: Container(
-                  width: 250,
-                  height: 250,
-                  decoration: BoxDecoration(
-                      border: Border.all(color: Colors.cyan, width: 4),
-                      borderRadius: BorderRadius.circular(10)))),
-          Positioned(
-              bottom: 140,
-              left: 30,
-              right: 30,
-              child: Row(children: [
-                Expanded(
-                    child: Obx(() => Slider(
-                        value: controller.zoom.value,
-                        min: 0.1,
-                        max: 1.0,
-                        onChanged: controller.setZoom)))
-              ])),
-          Positioned(
-            bottom: 20,
-            left: 20,
-            right: 20,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                ElevatedButton(
+        );
+        return false; // Prevent default back behavior
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Scan Pallet QR'),
+          backgroundColor: Colors.teal,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () {
+              // Custom back navigation to PalletDispatchScreen2
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => PalletDispatchScreen2(
+                    challanId: widget.challanId,
+                    scannedPallets: controller.scannedPallets,
+                    challanDetails: {
+                      'vendor': {
+                        'code': 'VENDOR001',
+                        'name': 'Default Vendor',
+                        'gstin': 'GSTIN123456789',
+                        'pan': 'PAN123456789',
+                      },
+                      'challan_no': widget.challanId,
+                      'challan_info': {
+                        'date': '2024-01-01',
+                        'vehicle_no': 'DL01AB1234',
+                        'transporter': 'Default Transporter',
+                      },
+                      'employee': {
+                        'code': 'EMP001',
+                        'name': 'Default Employee',
+                      },
+                      'material': {
+                        'code': 'MAT001',
+                        'description': 'Default Material',
+                        'hsn_code': 'HSN001',
+                        'pallet_count': '10',
+                        'unit': 'PCS',
+                        'axle_qty': '5',
+                        'expected_return_date': '2024-02-01',
+                      },
+                    },
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        body: Stack(
+          children: [
+            MobileScanner(
+              controller: controller.scannerController,
+              onDetect: (capture) {
+                final List<Barcode> barcodes = capture.barcodes;
+                if (barcodes.isNotEmpty && barcodes[0].rawValue != null) {
+                  final code = barcodes[0].rawValue!;
+                  controller.scannerController.stop();
+                  if (!controller.scannedPallets.contains(code)) {
+                    _showScannedCodeDialog(context, code);
+                  } else {
+                    _showDuplicateCodeDialog(context);
+                  }
+                }
+              },
+            ),
+            Positioned(
+              top: 30,
+              left: 10,
+              right: 10,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.image, color: Colors.white),
+                    onPressed: () async {
+                      final ImagePicker picker = ImagePicker();
+                      final XFile? image =
+                          await picker.pickImage(source: ImageSource.gallery);
+                      if (image != null) {
+                        try {
+                          final BarcodeCapture? capture = await controller
+                              .scannerController
+                              .analyzeImage(image.path);
+                          if (capture != null &&
+                              capture.barcodes.isNotEmpty &&
+                              capture.barcodes[0].rawValue != null) {
+                            final code = capture.barcodes[0].rawValue!;
+                            if (!controller.scannedPallets.contains(code)) {
+                              _showScannedCodeDialog(context, code);
+                            } else {
+                              _showDuplicateCodeDialog(context);
+                            }
+                          } else {
+                            // Show error if no QR code found in image
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                    'No QR code found in the selected image'),
+                                backgroundColor: Colors.red,
+                                duration: Duration(seconds: 3),
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          // Show error if image analysis fails
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                  'Error analyzing image: ${e.toString()}'),
+                              backgroundColor: Colors.red,
+                              duration: const Duration(seconds: 3),
+                            ),
+                          );
+                        }
+                      }
+                    },
+                  ),
+                  IconButton(
+                      icon: const Icon(Icons.flash_on, color: Colors.white),
+                      onPressed: () =>
+                          controller.scannerController.toggleTorch()),
+                  IconButton(
+                      icon: const Icon(Icons.flip_camera_android,
+                          color: Colors.white),
+                      onPressed: () =>
+                          controller.scannerController.switchCamera()),
+                ],
+              ),
+            ),
+            Center(
+                child: Container(
+                    width: 250,
+                    height: 250,
+                    decoration: BoxDecoration(
+                        border: Border.all(color: Colors.cyan, width: 4),
+                        borderRadius: BorderRadius.circular(10)))),
+            Positioned(
+                bottom: 140,
+                left: 30,
+                right: 30,
+                child: Row(children: [
+                  Expanded(
+                      child: Obx(() => Slider(
+                          value: controller.zoom.value,
+                          min: 0.1,
+                          max: 1.0,
+                          onChanged: controller.setZoom)))
+                ])),
+            Positioned(
+              bottom: 20,
+              left: 20,
+              right: 20,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.teal,
+                          foregroundColor: Colors.white),
+                      onPressed: () {
+                        // Navigate back to PalletDispatchScreen2
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => PalletDispatchScreen2(
+                              challanId: widget.challanId,
+                              scannedPallets: controller.scannedPallets,
+                              challanDetails: {
+                                'vendor': {
+                                  'code': 'VENDOR001',
+                                  'name': 'Default Vendor',
+                                  'gstin': 'GSTIN123456789',
+                                  'pan': 'PAN123456789',
+                                },
+                                'challan_no': widget.challanId,
+                                'challan_info': {
+                                  'date': '2024-01-01',
+                                  'vehicle_no': 'DL01AB1234',
+                                  'transporter': 'Default Transporter',
+                                },
+                                'employee': {
+                                  'code': 'EMP001',
+                                  'name': 'Default Employee',
+                                },
+                                'material': {
+                                  'code': 'MAT001',
+                                  'description': 'Default Material',
+                                  'hsn_code': 'HSN001',
+                                  'pallet_count': '10',
+                                  'unit': 'PCS',
+                                  'axle_qty': '5',
+                                  'expected_return_date': '2024-02-01',
+                                },
+                              },
+                            ),
+                          ),
+                        );
+                      },
+                      child: const Text('BACK')),
+                  ElevatedButton(
                     style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.teal,
                         foregroundColor: Colors.white),
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('BACK')),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.teal,
-                      foregroundColor: Colors.white),
-                  onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => PalletDispatchScreen(
-                              challanId: widget.challanId,
-                              scannedPallets: controller.scannedPallets))),
-                  child: const Text('VIEW'),
-                ),
-              ],
+                    onPressed: () => Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => PalletDispatchScreen(
+                                challanId: widget.challanId,
+                                scannedPallets: controller.scannedPallets))),
+                    child: const Text('VIEW'),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
+  // Function to parse QR string and extract MODEL PALLET and PALLET SR
+  Map<String, String> parseQRString(String qrString) {
+    String modelPallet = '';
+    String palletSr = '';
+
+    // Split the string by lines
+    List<String> lines = qrString.split('\n');
+
+    for (String line in lines) {
+      line = line.trim();
+
+      // Extract MODEL PALLET
+      if (line.startsWith('MODEL PALLET -')) {
+        modelPallet = line.replaceFirst('MODEL PALLET -', '').trim();
+      }
+
+      // Extract PALLET SR NO
+      if (line.startsWith('PALLET SR NO.-')) {
+        palletSr = line.replaceFirst('PALLET SR NO.-', '').trim();
+      }
+    }
+
+    return {
+      'modelPallet': modelPallet,
+      'palletSr': palletSr,
+      'originalCode': qrString,
+    };
+  }
+
   void _showScannedCodeDialog(BuildContext context, String code) {
+    // Parse the QR string to extract fields
+    Map<String, String> parsedData = parseQRString(code);
+
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Pallet scanned successfully!'),
-          content: Text(code),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('MODEL PALLET: ${parsedData['modelPallet']}'),
+              const SizedBox(height: 8),
+              Text('PALLET SR: ${parsedData['palletSr']}'),
+              const SizedBox(height: 12),
+              const Text('Original QR Code:',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+              Text(parsedData['originalCode']!,
+                  style: const TextStyle(fontSize: 12, color: Colors.grey)),
+            ],
+          ),
           actions: [
             TextButton(
               child: const Text('Done'),
               onPressed: () {
-                controller.addPallet(code);
-                Navigator.of(context).pop();
-                Navigator.pop(context, code);
+                // Store the parsed data instead of raw code
+                String displayCode =
+                    '${parsedData['modelPallet']} - ${parsedData['palletSr']}';
+                controller.addPallet(displayCode);
+                Navigator.of(context).pop(); // Close dialog
+                // Navigate to PalletDispatchScreen (list view) instead of going back
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => PalletDispatchScreen(
+                      challanId: widget.challanId,
+                      scannedPallets: controller.scannedPallets,
+                    ),
+                  ),
+                );
               },
             ),
           ],
@@ -574,8 +814,17 @@ class _CustomScannerScreenState extends State<CustomScannerScreen> {
             TextButton(
                 child: const Text('Back'),
                 onPressed: () {
-                  Navigator.of(context).pop();
-                  Navigator.pop(context);
+                  Navigator.of(context).pop(); // Close dialog
+                  // Navigate to PalletDispatchScreen (list view) instead of going back
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => PalletDispatchScreen(
+                        challanId: widget.challanId,
+                        scannedPallets: controller.scannedPallets,
+                      ),
+                    ),
+                  );
                 })
           ],
         );
@@ -603,17 +852,107 @@ class _PalletDispatchScreenState extends State<PalletDispatchScreen> {
   void initState() {
     super.initState();
     controller.setChallanId(widget.challanId);
-    if (controller.scannedPallets.isEmpty ||
-        controller.scannedPallets.length < widget.scannedPallets.length) {
-      controller.scannedPallets.assignAll(widget.scannedPallets);
-    }
+    // Use Future.microtask to avoid triggering rebuilds during build
+    Future.microtask(() {
+      if (controller.scannedPallets.isEmpty ||
+          controller.scannedPallets.length < widget.scannedPallets.length) {
+        controller.scannedPallets.assignAll(widget.scannedPallets);
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        appBar: AppBar(title: const Text("Pallet Dispatch")),
-        body: PalletDispatch3(context: context));
+    return WillPopScope(
+      onWillPop: () async {
+        // Always navigate back to PalletDispatchScreen2 instead of stacking
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PalletDispatchScreen2(
+              challanId: widget.challanId,
+              scannedPallets: controller.scannedPallets,
+              challanDetails: {
+                'vendor': {
+                  'code': 'VENDOR001',
+                  'name': 'Default Vendor',
+                  'gstin': 'GSTIN123456789',
+                  'pan': 'PAN123456789',
+                },
+                'challan_no': widget.challanId,
+                'challan_info': {
+                  'date': '2024-01-01',
+                  'vehicle_no': 'DL01AB1234',
+                  'transporter': 'Default Transporter',
+                },
+                'employee': {
+                  'code': 'EMP001',
+                  'name': 'Default Employee',
+                },
+                'material': {
+                  'code': 'MAT001',
+                  'description': 'Default Material',
+                  'hsn_code': 'HSN001',
+                  'pallet_count': '10',
+                  'unit': 'PCS',
+                  'axle_qty': '5',
+                  'expected_return_date': '2024-02-01',
+                },
+              },
+            ),
+          ),
+        );
+        return false; // Prevent default back behavior
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text("Pallet Dispatch"),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () {
+              // Custom back navigation to PalletDispatchScreen2
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => PalletDispatchScreen2(
+                    challanId: widget.challanId,
+                    scannedPallets: controller.scannedPallets,
+                    challanDetails: {
+                      'vendor': {
+                        'code': 'VENDOR001',
+                        'name': 'Default Vendor',
+                        'gstin': 'GSTIN123456789',
+                        'pan': 'PAN123456789',
+                      },
+                      'challan_no': widget.challanId,
+                      'challan_info': {
+                        'date': '2024-01-01',
+                        'vehicle_no': 'DL01AB1234',
+                        'transporter': 'Default Transporter',
+                      },
+                      'employee': {
+                        'code': 'EMP001',
+                        'name': 'Default Employee',
+                      },
+                      'material': {
+                        'code': 'MAT001',
+                        'description': 'Default Material',
+                        'hsn_code': 'HSN001',
+                        'pallet_count': '10',
+                        'unit': 'PCS',
+                        'axle_qty': '5',
+                        'expected_return_date': '2024-02-01',
+                      },
+                    },
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        body: PalletDispatch3(context: context),
+      ),
+    );
   }
 }
 
@@ -671,27 +1010,55 @@ class PalletDispatch3 extends StatelessWidget {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      "PALLET ID :",
-                                      style: TextStyle(
-                                        fontFamily: "DMSans",
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w400,
-                                        color: Colors.black54,
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        "MODEL PALLET:",
+                                        style: TextStyle(
+                                          fontFamily: "DMSans",
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w400,
+                                          color: Colors.black54,
+                                        ),
                                       ),
-                                    ),
-                                    Text(
-                                      controller.scannedPallets[index],
-                                      style: const TextStyle(
-                                        fontFamily: "DMSans",
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
+                                      Text(
+                                        controller.scannedPallets[index]
+                                            .split(' - ')[0],
+                                        style: const TextStyle(
+                                          fontFamily: "DMSans",
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                      const SizedBox(height: 4),
+                                      const Text(
+                                        "PALLET SR:",
+                                        style: TextStyle(
+                                          fontFamily: "DMSans",
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w400,
+                                          color: Colors.black54,
+                                        ),
+                                      ),
+                                      Text(
+                                        controller.scannedPallets[index]
+                                                    .split(' - ')
+                                                    .length >
+                                                1
+                                            ? controller.scannedPallets[index]
+                                                .split(' - ')[1]
+                                            : 'N/A',
+                                        style: const TextStyle(
+                                          fontFamily: "DMSans",
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                                 Row(
                                   children: [
@@ -739,7 +1106,7 @@ class PalletDispatch3 extends StatelessWidget {
                   Expanded(
                     child: ElevatedButton.icon(
                       onPressed: () async {
-                        String? scannedCode = await Navigator.push(
+                        String? scannedCode = await Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
                                 builder: (context) => CustomScannerScreen(
